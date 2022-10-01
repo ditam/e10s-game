@@ -11,6 +11,8 @@ const PLAYER_SPEED = 10;
 let ctx;
 let debugLog;
 
+let shipSpeed = 0.7; // fraction of c
+
 const player = {
   x: 300,
   y: 300
@@ -42,6 +44,11 @@ for (let i=0; i<25; i++) {
       y: j*50-2
     });
   }
+}
+
+function getTimeDilationFactor(speed) {
+  console.assert(speed >= 0 && speed < 1, 'Invalid speed: ' + speed);
+  return 1 / Math.sqrt(1-speed*speed);
 }
 
 function drawFrame(timestamp) {
@@ -105,8 +112,6 @@ const keysPressed = {
 };
 
 $(document).ready(function() {
-  console.log('Hello Canvas!');
-
   debugLog = $('#debug-log');
 
   const canvas = document.getElementById('main-canvas');
