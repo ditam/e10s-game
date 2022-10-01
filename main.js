@@ -1,11 +1,15 @@
 
 const WIDTH = 800;
+const MAX_WIDTH = 1200;
 const HEIGHT = 500;
+const MAX_HEIGHT = 800;
+const MAP_SCROLL_PADDING = 100;
 
+const PLAYER_SIZE = 20;
 const PLAYER_SPEED = 10;
-const MAP_SCROLL_PADDING = 50;
 
 let ctx;
+let debugLog;
 
 const player = {
   x: 300,
@@ -18,35 +22,54 @@ const playerInViewport = {
 };
 
 const viewport = {
-  x: 300,
-  y: 300
+  x: 0,
+  y: 0
 };
 
+const mapObjects = [
+  {
+    type: 'corner-mark',
+    x: WIDTH-6,
+    y: HEIGHT-6
+  }
+];
+
+for (let i=0; i<25; i++) {
+  for (let j=0; j<20; j++) {
+    mapObjects.push({
+      type: 'gridmark',
+      x: i*50-2,
+      y: j*50-2
+    });
+  }
+}
+
 function drawFrame(timestamp) {
+  debugLog.text(JSON.stringify(player) + ', v: ' + JSON.stringify(viewport));
   ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
   // move player according to current pressed keys
   if (keysPressed.up) {
     player.y = Math.max(0, player.y - PLAYER_SPEED);
     playerInViewport.y = player.y - viewport.y;
-    if (playerInViewport.y <= MAP_SCROLL_PADDING) { // TODO: use padding+speed in bounds check?
+    if (playerInViewport.y <= MAP_SCROLL_PADDING) { // TODO: use padding+speed in bounds checks?
       viewport.y = Math.max(0, viewport.y - PLAYER_SPEED);
       playerInViewport.y = player.y - viewport.y;
     }
   }
   if (keysPressed.right) {
-    player.x = Math.min(WIDTH, player.x + PLAYER_SPEED);
+    player.x = Math.min(MAX_WIDTH - PLAYER_SIZE, player.x + PLAYER_SPEED);
     playerInViewport.x = player.x - viewport.x;
     if (playerInViewport.x >= WIDTH - MAP_SCROLL_PADDING) {
-      viewport.x = Math.min(WIDTH, viewport.x + PLAYER_SPEED);
+      viewport.x = Math.min(MAX_WIDTH - WIDTH, viewport.x + PLAYER_SPEED);
       playerInViewport.x = player.x - viewport.x;
     }
   }
   if (keysPressed.down) {
-    player.y = Math.min(HEIGHT, player.y + PLAYER_SPEED);
+    player.y = Math.min(MAX_HEIGHT - PLAYER_SIZE, player.y + PLAYER_SPEED);
     playerInViewport.y = player.y - viewport.y;
     if (playerInViewport.y >= HEIGHT- MAP_SCROLL_PADDING) {
-      viewport.y = Math.min(HEIGHT, viewport.y + PLAYER_SPEED);
+      viewport.y = Math.min(MAX_HEIGHT - HEIGHT, viewport.y + PLAYER_SPEED);
       playerInViewport.y = player.y - viewport.y;
     }
   }
@@ -59,8 +82,17 @@ function drawFrame(timestamp) {
     }
   }
 
+  // draw objects
+  ctx.save();
+  mapObjects.forEach(o => {
+    ctx.fillStyle = o.type === 'gridmark' ? 'gray' : 'red';
+    const size = o.type === 'corner-mark' ? 12 : 5;
+    ctx.fillRect(o.x - viewport.x, o.y - viewport.y, size, size);
+  });
+  ctx.restore();
+
   // draw player
-  ctx.fillRect(player.x, player.y, 20, 20);
+  ctx.fillRect(playerInViewport.x, playerInViewport.y, 20, 20);
 
   requestAnimationFrame(drawFrame);
 }
@@ -74,6 +106,8 @@ const keysPressed = {
 
 $(document).ready(function() {
   console.log('Hello Canvas!');
+
+  debugLog = $('#debug-log');
 
   const canvas = document.getElementById('main-canvas');
   $(canvas).attr('height', HEIGHT);
