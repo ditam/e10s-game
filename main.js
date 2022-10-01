@@ -2,24 +2,75 @@
 const WIDTH = 800;
 const HEIGHT = 500;
 
+const PLAYER_SPEED = 10;
+const MAP_SCROLL_PADDING = 50;
+
 let ctx;
 
-let xPosition = 0;
+const player = {
+  x: 300,
+  y: 300
+};
+
+const playerInViewport = {
+  x: 300,
+  y: 300
+};
+
+const viewport = {
+  x: 300,
+  y: 300
+};
 
 function drawFrame(timestamp) {
   ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
-  ctx.beginPath();
-  ctx.moveTo(225, 300);
-  ctx.lineTo(325, 450);
-  ctx.lineTo(625,  50);
-  ctx.stroke();
+  // move player according to current pressed keys
+  if (keysPressed.up) {
+    player.y = Math.max(0, player.y - PLAYER_SPEED);
+    playerInViewport.y = player.y - viewport.y;
+    if (playerInViewport.y <= MAP_SCROLL_PADDING) { // TODO: use padding+speed in bounds check?
+      viewport.y = Math.max(0, viewport.y - PLAYER_SPEED);
+      playerInViewport.y = player.y - viewport.y;
+    }
+  }
+  if (keysPressed.right) {
+    player.x = Math.min(WIDTH, player.x + PLAYER_SPEED);
+    playerInViewport.x = player.x - viewport.x;
+    if (playerInViewport.x >= WIDTH - MAP_SCROLL_PADDING) {
+      viewport.x = Math.min(WIDTH, viewport.x + PLAYER_SPEED);
+      playerInViewport.x = player.x - viewport.x;
+    }
+  }
+  if (keysPressed.down) {
+    player.y = Math.min(HEIGHT, player.y + PLAYER_SPEED);
+    playerInViewport.y = player.y - viewport.y;
+    if (playerInViewport.y >= HEIGHT- MAP_SCROLL_PADDING) {
+      viewport.y = Math.min(HEIGHT, viewport.y + PLAYER_SPEED);
+      playerInViewport.y = player.y - viewport.y;
+    }
+  }
+  if (keysPressed.left) {
+    player.x = Math.max(0, player.x - PLAYER_SPEED);
+    playerInViewport.x = player.x - viewport.x;
+    if (playerInViewport.x <= MAP_SCROLL_PADDING) {
+      viewport.x = Math.max(0, viewport.x - PLAYER_SPEED);
+      playerInViewport.x = player.x - viewport.x;
+    }
+  }
 
-  xPosition = (timestamp/3) % WIDTH;
-  ctx.fillRect(xPosition, HEIGHT/2-10, 20, 20);
+  // draw player
+  ctx.fillRect(player.x, player.y, 20, 20);
 
   requestAnimationFrame(drawFrame);
 }
+
+const keysPressed = {
+  up:    false,
+  right: false,
+  down:  false,
+  left:  false
+};
 
 $(document).ready(function() {
   console.log('Hello Canvas!');
@@ -30,9 +81,46 @@ $(document).ready(function() {
 
   ctx = canvas.getContext('2d');
 
-  ctx.fillStyle = '#00FF00';
+  ctx.fillStyle = '#008800';
   ctx.strokeStyle = 'green';
   ctx.lineWidth = 5;
 
+  // keypress event listeners
+  // TODO: extend to WASD
+  document.addEventListener('keydown', event => {
+    switch(event.keyCode) {
+      case 38:
+        keysPressed.up = true;
+        break;
+      case 39:
+        keysPressed.right = true;
+        break;
+      case 40:
+        keysPressed.down = true;
+        break;
+      case 37:
+        keysPressed.left = true;
+        break;
+    }
+  });
+
+  document.addEventListener('keyup', event => {
+    switch(event.keyCode) {
+      case 38:
+        keysPressed.up = false;
+        break;
+      case 39:
+        keysPressed.right = false;
+        break;
+      case 40:
+        keysPressed.down = false;
+        break;
+      case 37:
+        keysPressed.left = false;
+        break;
+    }
+  });
+
+  // start animation loop
   drawFrame();
 });
