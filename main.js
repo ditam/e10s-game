@@ -69,13 +69,7 @@ const tileTypes = [
 })();
 
 
-const mapObjects = [
-  {
-    type: 'corner-mark',
-    x: WIDTH-6,
-    y: HEIGHT-6
-  }
-];
+const mapObjects = [];
 
 for (let i=0; i<25; i++) {
   for (let j=0; j<20; j++) {
@@ -195,7 +189,7 @@ function drawFrame(timestamp) {
   ctx.save();
   mapObjects.forEach(o => {
     ctx.fillStyle = o.type === 'gridmark' ? 'gray' : 'red';
-    const size = o.type === 'corner-mark' ? 12 : 5;
+    const size = 5;
     ctx.fillRect(o.x - viewport.x, o.y - viewport.y, size, size);
   });
   ctx.restore();
