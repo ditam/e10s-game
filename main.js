@@ -22,7 +22,7 @@ let dayCountArea, timeCountArea, nextPingArea;
 let pingSweep;
 
 let dayCount = 105; // days in year
-let timeCount = 16 * 60 * 60 * 1000 + 187531; // ms in day
+let timeCount = 16 * 60 * 60 * 1000 + 187000; // ms in day
 let lastPing = timeCount;
 
 let shipSpeed = 0.7; // fraction of c
