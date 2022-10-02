@@ -16,13 +16,13 @@ let debugLog;
 let shipSpeed = 0.7; // fraction of c
 
 const player = {
-  x: 300,
-  y: 300
+  x: 150,
+  y: 150
 };
 
 const playerInViewport = {
-  x: 300,
-  y: 300
+  x: player.x,
+  y: player.y
 };
 
 const viewport = {
@@ -44,6 +44,7 @@ const mapTiles = [
 const tileTypes = [
   {
     bgURL: 'assets/tile0.png',
+    forbidden: true,
   },
   {
     bgURL: 'assets/tile1.png',
@@ -82,17 +83,33 @@ for (let i=0; i<25; i++) {
   }
 }
 
+function getTileCoords(position) {
+  console.assert('x' in position && 'y' in position, 'Invalid position: ' + position);
+  return {
+    x: Math.floor(position.x / TILE_SIZE),
+    y: Math.floor(position.y / TILE_SIZE)
+  };
+}
+
+function canMoveTo(position) {
+  // disallows moving to forbidden tiles
+  const tileCoords = getTileCoords(position);
+  const tileTypeIndex = mapTiles[tileCoords.y][tileCoords.x];
+  const tileType = tileTypes[tileTypeIndex];
+  return !tileType.forbidden;
+}
+
 function getTimeDilationFactor(speed) {
   console.assert(speed >= 0 && speed < 1, 'Invalid speed: ' + speed);
   return 1 / Math.sqrt(1-speed*speed);
 }
 
-function drawFrame(timestamp) {
-  debugLog.text(JSON.stringify(player) + ', v: ' + JSON.stringify(viewport));
-  ctx.clearRect(0, 0, WIDTH, HEIGHT);
-
+function movePlayer() {
   // move player according to current pressed keys
   if (keysPressed.up) {
+    if (!canMoveTo({x: player.x, y: player.y - PLAYER_SPEED})) {
+      return;
+    }
     player.y = Math.max(0, player.y - PLAYER_SPEED);
     playerInViewport.y = player.y - viewport.y;
     if (playerInViewport.y <= MAP_SCROLL_PADDING) { // TODO: use padding+speed in bounds checks?
@@ -101,6 +118,9 @@ function drawFrame(timestamp) {
     }
   }
   if (keysPressed.right) {
+    if (!canMoveTo({x: player.x + PLAYER_SPEED, y: player.y})) {
+      return;
+    }
     player.x = Math.min(MAX_WIDTH - PLAYER_SIZE, player.x + PLAYER_SPEED);
     playerInViewport.x = player.x - viewport.x;
     if (playerInViewport.x >= WIDTH - MAP_SCROLL_PADDING) {
@@ -109,6 +129,9 @@ function drawFrame(timestamp) {
     }
   }
   if (keysPressed.down) {
+    if (!canMoveTo({x: player.x, y: player.y + PLAYER_SPEED})) {
+      return;
+    }
     player.y = Math.min(MAX_HEIGHT - PLAYER_SIZE, player.y + PLAYER_SPEED);
     playerInViewport.y = player.y - viewport.y;
     if (playerInViewport.y >= HEIGHT- MAP_SCROLL_PADDING) {
@@ -117,6 +140,9 @@ function drawFrame(timestamp) {
     }
   }
   if (keysPressed.left) {
+    if (!canMoveTo({x: player.x - PLAYER_SPEED, y: player.y})) {
+      return;
+    }
     player.x = Math.max(0, player.x - PLAYER_SPEED);
     playerInViewport.x = player.x - viewport.x;
     if (playerInViewport.x <= MAP_SCROLL_PADDING) {
@@ -124,6 +150,16 @@ function drawFrame(timestamp) {
       playerInViewport.x = player.x - viewport.x;
     }
   }
+}
+
+function drawFrame(timestamp) {
+  ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+  const tileCoordsBeforeMove = getTileCoords(player);
+  debugLog.text(JSON.stringify(player) + ', v: ' + JSON.stringify(viewport) + ', tile: ' + JSON.stringify(tileCoordsBeforeMove));
+
+  // move player
+  movePlayer();
 
   // draw tiles
   mapTiles.forEach((row, rowIndex) => {
