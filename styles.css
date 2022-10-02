@@ -1,9 +1,23 @@
 body {
   background-color: #eee;
+  padding: 50px;
 }
 
 canvas {
   background-color: white;
   border: 1px solid gray;
-  margin: 50px;
+}
+
+#time-display {
+  padding: 20px;
+  background-color: rgb(2, 2, 54);
+  color: white;
+  font-family: monospace;
+  font-size: 20px;
+  line-height: 25px;
+}
+
+#next-ping-value {
+  margin-left: 8.8em; /* based on experiments, should align with seconds above*/
+  /* TODO: give separate containers to ss:mmm part and match position in JS? */
 }

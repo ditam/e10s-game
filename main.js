@@ -13,6 +13,11 @@ const PLAYER_SPEED = 10;
 
 let ctx;
 let debugLog;
+let dayCountArea, timeCountArea, nextPingArea;
+
+let dayCount = 105; // days in year
+let timeCount = 16 * 60 * 60 * 1000 + 187531; // ms in day
+let lastPing = timeCount;
 
 let shipSpeed = 0.7; // fraction of c
 
@@ -117,6 +122,37 @@ function getTimeDilationFactor(speed) {
   return 1 / Math.sqrt(1-speed*speed);
 }
 
+function updateTimeDisplay() {
+  let month = Math.floor(dayCount / 30);
+  month = (month+'').padStart(2, '0');
+  dayCountArea.text(`${month}-${dayCount-month*30} `);
+
+  let hours = Math.floor(timeCount / (60*60*1000));
+  let timeCountLeft = timeCount-hours*60*60*1000;
+  let minutes = Math.floor(timeCountLeft / (60*1000));
+  timeCountLeft = timeCountLeft-minutes*60*1000;
+  let seconds = Math.floor(timeCountLeft / 1000);
+  timeCountLeft = timeCountLeft-seconds*1000;
+  let ms = timeCountLeft;
+
+  hours = (hours+'').padStart(2, '0');
+  minutes = (minutes+'').padStart(2, '0');
+  seconds = (seconds+'').padStart(2, '0');
+  ms = (ms+'').padStart(3, '0');
+
+  timeCountArea.text(`${hours}:${minutes}:${seconds}.${ms}`);
+
+  const timeSincePing = timeCount - lastPing;
+  const timeToNextPing = 10*1000 - 1 - timeSincePing; // we cheat a MS to fix layout shift at exactly 10k - sue me
+  let pingSeconds = Math.floor(timeToNextPing / 1000);
+  timeCountLeft = timeToNextPing-pingSeconds*1000;
+  let pingMs = timeCountLeft;
+
+  //pingSeconds = (pingSeconds+'').padStart(2, '0'); // we don't need to ping this as ET ping time is always <10
+  pingMs = (pingMs+'').padStart(3, '0');
+  nextPingArea.text(`${pingSeconds}.${pingMs}`);
+}
+
 function movePlayer() {
   // move player according to current pressed keys
   if (keysPressed.up) {
@@ -165,11 +201,33 @@ function movePlayer() {
   }
 }
 
+function processPing() {
+  lastPing = timeCount;
+  // TODO: scan
+}
+
+let lastDrawTime = 0;
 function drawFrame(timestamp) {
+  // update timers
+  // TODO: apply time dilation
+  const timeSinceLastDraw = timestamp-lastDrawTime;
+  timeCount+=Math.round(timeSinceLastDraw);
+  if (timeCount - lastPing > 10000) {
+    processPing();
+  }
+  lastDrawTime = timestamp;
+  updateTimeDisplay();
+
+  // clear canvas
   ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
+  // print debug info to DOM
   const tileCoordsBeforeMove = getTileCoords(player);
-  debugLog.text(JSON.stringify(player) + ', v: ' + JSON.stringify(viewport) + ', tile: ' + JSON.stringify(tileCoordsBeforeMove));
+  debugLog.text(
+    JSON.stringify(player) + ', v: ' + JSON.stringify(viewport) +
+    ', tile: ' + JSON.stringify(tileCoordsBeforeMove) +
+    ', since ping: ' + (timeCount-lastPing)
+  );
 
   // move player
   movePlayer();
@@ -189,7 +247,7 @@ function drawFrame(timestamp) {
   ctx.save();
   mapObjects.forEach(o => {
     ctx.fillStyle = o.type === 'gridmark' ? 'gray' : 'red';
-    const size = 5;
+    const size = 2;
     ctx.fillRect(o.x - viewport.x, o.y - viewport.y, size, size);
   });
   ctx.restore();
@@ -209,6 +267,10 @@ const keysPressed = {
 
 $(document).ready(function() {
   debugLog = $('#debug-log');
+
+  dayCountArea = $('#day-value');
+  timeCountArea = $('#time-value');
+  nextPingArea = $('#next-ping-value');
 
   const canvas = document.getElementById('main-canvas');
   $(canvas).attr('height', HEIGHT);
@@ -257,5 +319,5 @@ $(document).ready(function() {
   });
 
   // start animation loop
-  drawFrame();
+  drawFrame(0);
 });
