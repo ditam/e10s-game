@@ -342,34 +342,49 @@ $(document).ready(function() {
   // keypress event listeners
   // TODO: extend to WASD
   document.addEventListener('keydown', event => {
-    switch(event.keyCode) {
-      case 38:
+    switch(event.code) {
+      case 'KeyW':
+      case 'ArrowUp':
         keysPressed.up = true;
+        event.preventDefault();
         break;
-      case 39:
+      case 'KeyD':
+      case 'ArrowRight':
         keysPressed.right = true;
+        event.preventDefault();
         break;
-      case 40:
+      case 'KeyS':
+      case 'ArrowDown':
         keysPressed.down = true;
+        event.preventDefault();
         break;
-      case 37:
+      case 'KeyA':
+      case 'ArrowLeft':
         keysPressed.left = true;
+        event.preventDefault();
+        break;
+      case 'Space':
+        event.preventDefault();
         break;
     }
   });
 
   document.addEventListener('keyup', event => {
-    switch(event.keyCode) {
-      case 38:
+    switch(event.code) {
+      case 'KeyW':
+      case 'ArrowUp':
         keysPressed.up = false;
         break;
-      case 39:
+      case 'KeyD':
+      case 'ArrowRight':
         keysPressed.right = false;
         break;
-      case 40:
+      case 'KeyS':
+      case 'ArrowDown':
         keysPressed.down = false;
         break;
-      case 37:
+      case 'KeyA':
+      case 'ArrowLeft':
         keysPressed.left = false;
         break;
     }
