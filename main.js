@@ -11,6 +11,8 @@ const PLAYER_SIZE = 20;
 const PLAYER_SPEED = 10;
 // NB: the current collision detection might leave PLAYER_SPEED-1 sized gaps
 
+let DEBUG = false;
+
 let ctx;
 let debugLog;
 let dayCountArea, timeCountArea, nextPingArea;
@@ -47,6 +49,8 @@ const mapTiles = [
   [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0]
 ];
 
+const mapWalls = [];
+
 console.assert(mapTiles[0].length * TILE_SIZE >= MAX_WIDTH, 'Not enough map tile columns to cover MAX_WIDTH');
 console.assert(mapTiles.length * TILE_SIZE >= MAX_HEIGHT, 'Not enough map tile rows to cover MAX_HEIGHT');
 
@@ -74,16 +78,50 @@ const tileTypes = [
   });
 })();
 
+(function addWalls() {
+  mapTiles.forEach((row, rowIndex) => {
+    row.forEach((t, colIndex) => {
+      const tile = tileTypes[t];
+      console.assert(typeof tile === 'object', 'Invalid tile type: ' + t + ' -> ' + tile);
+      console.assert(tile.image, 'Missing tile image for tile type ' + t);
+
+      // check tile changes only backwards (from above and left), the other directions are covered by later tiles
+      if (rowIndex > 0) {
+        const tAbove = mapTiles[rowIndex-1][colIndex];
+        if (tAbove !== t && (t === 0 || tAbove === 0)) {
+          mapWalls.push({
+            x: colIndex * TILE_SIZE,
+            y: rowIndex * TILE_SIZE,
+            orientation: 'horizontal'
+          });
+        }
+      }
+      if (colIndex > 0) {
+        const tToLeft = mapTiles[rowIndex][colIndex-1];
+        if (tToLeft !== t && (t === 0 || tToLeft === 0)) {
+          mapWalls.push({
+            x: colIndex * TILE_SIZE,
+            y: rowIndex * TILE_SIZE,
+            orientation: 'vertical'
+          });
+        }
+      }
+    });
+  });
+})();
+
 
 const mapObjects = [];
 
-for (let i=0; i<25; i++) {
-  for (let j=0; j<20; j++) {
-    mapObjects.push({
-      type: 'gridmark',
-      x: i*50-2,
-      y: j*50-2
-    });
+if (DEBUG) {
+  for (let i=0; i<25; i++) {
+    for (let j=0; j<20; j++) {
+      mapObjects.push({
+        type: 'gridmark',
+        x: i*50-2,
+        y: j*50-2
+      });
+    }
   }
 }
 
@@ -253,6 +291,15 @@ function drawFrame(timestamp) {
     });
   });
 
+  // draw walls
+  mapWalls.forEach(w => {
+    ctx.beginPath();
+    ctx.moveTo(w.x - viewport.x, w.y - viewport.y);
+    const h = (w.orientation === 'horizontal');
+    ctx.lineTo(w.x - viewport.x + (h? 100 : 0), w.y - viewport.y + (h? 0 : 100));
+    ctx.stroke();
+  });
+
   // draw objects
   ctx.save();
   mapObjects.forEach(o => {
@@ -289,8 +336,8 @@ $(document).ready(function() {
   ctx = canvas.getContext('2d');
 
   ctx.fillStyle = '#008800';
-  ctx.strokeStyle = 'green';
-  ctx.lineWidth = 5;
+  ctx.strokeStyle = '#000000';
+  ctx.lineWidth = 4;
 
   // keypress event listeners
   // TODO: extend to WASD
