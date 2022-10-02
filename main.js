@@ -9,6 +9,7 @@ const TILE_SIZE = 100;
 
 const PLAYER_SIZE = 20;
 const PLAYER_SPEED = 10;
+// NB: the current collision detection might leave PLAYER_SPEED-1 sized gaps
 
 let ctx;
 let debugLog;
@@ -31,15 +32,18 @@ const viewport = {
 };
 
 const mapTiles = [
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 1, 2, 3, 3, 0, 0, 0, 0, 0, 0, 0],
+  [0, 1, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0],
+  [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
   [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0],
   [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0]
 ];
+
+console.assert(mapTiles[0].length * TILE_SIZE >= MAX_WIDTH, 'Not enough map tile columns to cover MAX_WIDTH');
+console.assert(mapTiles.length * TILE_SIZE >= MAX_HEIGHT, 'Not enough map tile rows to cover MAX_HEIGHT');
 
 const tileTypes = [
   {
@@ -94,8 +98,23 @@ function getTileCoords(position) {
 function canMoveTo(position) {
   // disallows moving to forbidden tiles
   const tileCoords = getTileCoords(position);
+
+  // it is valid to check out of bounds (to allow for simple player size offsets going right/down),
+  // but it is guaranteed to be forbidden
+  if (
+    tileCoords.x > mapTiles[0].length - 1 ||
+    tileCoords.y > mapTiles.length - 1 ||
+    tileCoords.x < 0 ||
+    tileCoords.y < 0
+  ) {
+    return false;
+  }
+
   const tileTypeIndex = mapTiles[tileCoords.y][tileCoords.x];
   const tileType = tileTypes[tileTypeIndex];
+
+  console.assert(tileType, 'Unexpected out of bounds position: ' + JSON.stringify(position));
+
   return !tileType.forbidden;
 }
 
@@ -118,7 +137,7 @@ function movePlayer() {
     }
   }
   if (keysPressed.right) {
-    if (!canMoveTo({x: player.x + PLAYER_SPEED, y: player.y})) {
+    if (!canMoveTo({x: player.x + PLAYER_SIZE + PLAYER_SPEED, y: player.y})) {
       return;
     }
     player.x = Math.min(MAX_WIDTH - PLAYER_SIZE, player.x + PLAYER_SPEED);
@@ -129,7 +148,7 @@ function movePlayer() {
     }
   }
   if (keysPressed.down) {
-    if (!canMoveTo({x: player.x, y: player.y + PLAYER_SPEED})) {
+    if (!canMoveTo({x: player.x, y: player.y + PLAYER_SIZE + PLAYER_SPEED})) {
       return;
     }
     player.y = Math.min(MAX_HEIGHT - PLAYER_SIZE, player.y + PLAYER_SPEED);
