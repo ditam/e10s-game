@@ -1,5 +1,5 @@
 
-const WIDTH = 800;
+const WIDTH = 800; // match to sweep .visible CSS rule or change from class-based to js-based sweep target position
 const MAX_WIDTH = 1200;
 const HEIGHT = 500;
 const MAX_HEIGHT = 800;
@@ -11,11 +11,15 @@ const PLAYER_SIZE = 20;
 const PLAYER_SPEED = 10;
 // NB: the current collision detection might leave PLAYER_SPEED-1 sized gaps
 
+const SWEEP_DURATION = 2500; // should match CSS until we can add it dynamically
+const SWEEP_WIDTH = 150;
+
 let DEBUG = false;
 
 let ctx;
 let debugLog;
 let dayCountArea, timeCountArea, nextPingArea;
+let pingSweep;
 
 let dayCount = 105; // days in year
 let timeCount = 16 * 60 * 60 * 1000 + 187531; // ms in day
@@ -240,31 +244,49 @@ function movePlayer() {
   }
 }
 
-function processPing() {
+function startPing() {
+  // NB: hit detection is in drawFrame
   lastPing = timeCount;
-  const playerTile = getTileCoords(player);
-  const tileTypeIndex = mapTiles[playerTile.y][playerTile.x];
-  const tileType = tileTypes[tileTypeIndex];
-  // TODO: ping animation - bust with delay?
-  if (!tileType.allowedDuringPing) {
-    console.warn('Ping - Busted!');
-    // TODO: game end logic
-  } else {
-    console.log('Ping OK');
-  }
+  sweepPassedPlayer = false;
+
+  pingSweep.addClass('transition-on visible');
+  setTimeout(() => {
+    pingSweep.removeClass('transition-on visible triggered');
+  }, SWEEP_DURATION + 500);
 }
 
 let lastDrawTime = 0;
+let sweepPassedPlayer = false;
 function drawFrame(timestamp) {
   // update timers
   // TODO: apply time dilation
   const timeSinceLastDraw = timestamp-lastDrawTime;
   timeCount+=Math.round(timeSinceLastDraw);
   if (timeCount - lastPing > 10000) {
-    processPing();
+    startPing();
   }
   lastDrawTime = timestamp;
   updateTimeDisplay();
+
+  // sweep hit scanning
+  if (timeCount - lastPing < SWEEP_DURATION) {
+    // a sweep is in progress: we estimate the sweeper position (not exact, as it is controlled by a css transition)
+    // we do a position check the first time we find the sweep further right than the player
+    const sweepEstimate = (timeCount - lastPing)/SWEEP_DURATION * (WIDTH+SWEEP_WIDTH);
+    if (!sweepPassedPlayer && sweepEstimate > player.x - viewport.x) { // NB: for now, we sweep only the viewport
+      sweepPassedPlayer = true;
+      const playerTile = getTileCoords(player);
+      const tileTypeIndex = mapTiles[playerTile.y][playerTile.x];
+      const tileType = tileTypes[tileTypeIndex];
+      if (!tileType.allowedDuringPing) {
+        console.warn('Ping - Busted!');
+        pingSweep.addClass('triggered')
+        // TODO: game end logic
+      } else {
+        console.log('Ping OK');
+      }
+    }
+  }
 
   // clear canvas
   ctx.clearRect(0, 0, WIDTH, HEIGHT);
@@ -329,9 +351,19 @@ $(document).ready(function() {
   timeCountArea = $('#time-value');
   nextPingArea = $('#next-ping-value');
 
+  pingSweep = $('#sweep');
+  // FIXME: add transition property dynamically (does not seem to work with .css()?)
+  //        toggling it could allow to start sweep far off-screen depending on player position (ie. at the actual edge of the map)
+
   const canvas = document.getElementById('main-canvas');
   $(canvas).attr('height', HEIGHT);
   $(canvas).attr('width', WIDTH);
+
+  // we set the size of the container explicitly to be able to clip the sweep
+  $('#container').css({
+    width: WIDTH,
+    height: HEIGHT
+  });
 
   ctx = canvas.getContext('2d');
 
@@ -389,6 +421,9 @@ $(document).ready(function() {
         break;
     }
   });
+
+  // start first ping - later pings are started when 10 seconds have passed
+  startPing();
 
   // start animation loop
   drawFrame(0);

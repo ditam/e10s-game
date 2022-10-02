@@ -3,6 +3,11 @@ body {
   padding: 50px;
 }
 
+#container {
+  position: relative;
+  overflow: hidden;
+}
+
 canvas {
   background-color: white;
   border: 1px solid gray;
@@ -20,4 +25,27 @@ canvas {
 #next-ping-value {
   margin-left: 8.8em; /* based on experiments, should align with seconds above*/
   /* TODO: give separate containers to ss:mmm part and match position in JS? */
+}
+
+#sweep {
+  position: absolute;
+  top: 0;
+  left: -151px;
+  height: 100%;
+  width: 150px;
+  border-right: 1px solid rgb(0, 137, 0);
+  background-image: linear-gradient(to right, rgba(0,137,0,0), rgb(0,137,0,0.4));
+}
+
+#sweep.transition-on {
+  transition: left 2.5s linear;
+}
+
+#sweep.triggered {
+  border-right: 1px solid red;
+  background-image: linear-gradient(to right, rgba(255,0,0,0), rgb(255,0,0,0.4));
+}
+
+#sweep.visible {
+  left: 800px;
 }
