@@ -5,6 +5,8 @@ const HEIGHT = 500;
 const MAX_HEIGHT = 800;
 const MAP_SCROLL_PADDING = 100;
 
+const TILE_SIZE = 100;
+
 const PLAYER_SIZE = 20;
 const PLAYER_SPEED = 10;
 
@@ -27,6 +29,40 @@ const viewport = {
   x: 0,
   y: 0
 };
+
+const mapTiles = [
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0],
+  [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0]
+];
+
+const tileTypes = [
+  {
+    bgURL: 'assets/tile0.png',
+  },
+  {
+    bgURL: 'assets/tile1.png',
+  },
+  {
+    bgURL: 'assets/tile2.png',
+  },
+  {
+    bgURL: 'assets/tile3.png',
+  },
+];
+
+(function addImageRefToTileTypes() {
+  tileTypes.forEach(tile => {
+    const image = $('<img>').attr('src', tile.bgURL);
+    tile.image = image.get(0);
+  });
+})();
+
 
 const mapObjects = [
   {
@@ -88,6 +124,17 @@ function drawFrame(timestamp) {
       playerInViewport.x = player.x - viewport.x;
     }
   }
+
+  // draw tiles
+  mapTiles.forEach((row, rowIndex) => {
+    row.forEach((t, colIndex) => {
+      const tile = tileTypes[t];
+      console.assert(typeof tile === 'object', 'Invalid tile type: ' + t + ' -> ' + tile);
+      console.assert(tile.image, 'Missing tile image for tile type ' + t);
+
+      ctx.drawImage(tile.image, colIndex*TILE_SIZE - viewport.x, rowIndex*TILE_SIZE - viewport.y, TILE_SIZE, TILE_SIZE);
+    });
+  });
 
   // draw objects
   ctx.save();
