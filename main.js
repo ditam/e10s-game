@@ -63,6 +63,7 @@ const tileTypes = [
   },
   {
     bgURL: 'assets/tile3.png',
+    allowedDuringPing: true
   },
 ];
 
@@ -203,7 +204,16 @@ function movePlayer() {
 
 function processPing() {
   lastPing = timeCount;
-  // TODO: scan
+  const playerTile = getTileCoords(player);
+  const tileTypeIndex = mapTiles[playerTile.y][playerTile.x];
+  const tileType = tileTypes[tileTypeIndex];
+  // TODO: ping animation - bust with delay?
+  if (!tileType.allowedDuringPing) {
+    console.warn('Ping - Busted!');
+    // TODO: game end logic
+  } else {
+    console.log('Ping OK');
+  }
 }
 
 let lastDrawTime = 0;
