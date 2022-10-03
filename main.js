@@ -14,7 +14,7 @@ const PLAYER_SPEED = 4;
 const SWEEP_DURATION = 2500; // should match CSS until we can add it dynamically
 const SWEEP_WIDTH = 150;
 
-let DEBUG = false;
+let DEBUG = location && location.hostname==='localhost';
 
 let ctx;
 let debugLog;
@@ -95,7 +95,8 @@ const mapObjects = [
   },
 ];
 
-if (DEBUG) {
+const useGridmarks = false;
+if (DEBUG && useGridmarks) {
   for (let i=0; i<25; i++) {
     for (let j=0; j<20; j++) {
       mapObjects.push({
@@ -367,13 +368,14 @@ function drawFrame(timestamp) {
   });
   ctx.restore();
 
-  // print debug info to DOM
-  const tileCoordsBeforeMove = getTileCoords(player);
-  debugLog.text(
-    JSON.stringify(player) + ', v: ' + JSON.stringify(viewport) +
-    ', tile: ' + JSON.stringify(tileCoordsBeforeMove) +
-    ', since ping: ' + (timeCount-lastPing)
-  );
+  // optionally print debug info to DOM
+  if (DEBUG) {
+    debugLog.text(
+      JSON.stringify(player) + ', v: ' + JSON.stringify(viewport) +
+      ', tile: ' + JSON.stringify(getTileCoords(player)) +
+      ', since ping: ' + (timeCount-lastPing)
+    );
+  }
 
   // move player
   movePlayer();
