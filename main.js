@@ -11,6 +11,8 @@ const PLAYER_SIZE = 56;
 const PLAYER_SPEED = 4;
 // NB: the current collision detection might leave PLAYER_SPEED-1 sized gaps
 
+const NEARBY_RADIUS = 250;
+
 const SWEEP_DURATION = 2500; // should match CSS until we can add it dynamically
 const SWEEP_WIDTH = 150;
 
@@ -32,13 +34,13 @@ const playerImage = $('<img>').attr('src', 'assets/player.png').get(0);
 let playerAngle = 0; // radians, starting from x axis clockwise
 
 const player = {
-  x: 450,
-  y: 1050
+  x: 1500,
+  y: 500
 };
 
 const viewport = {
-  x: 0,
-  y: 450
+  x: 800,
+  y: 200
 };
 
 // this is just a shortcut, and it's error-prone to have it...
@@ -48,48 +50,47 @@ const playerInViewport = {
 };
 
 const mapTiles = [
-  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [1, 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 1, 2, 3, 3, 4, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 1, 0, 0, 3, 4, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                                             // x -> player start 1500
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 0, 5, 5, 5, 5],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 0, 5, 5, 5, 5], // y -> player start 500
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 5, 5, 5],
+  [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 3, 5, 5, 5],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 5, 5, 5],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 5],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 5],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5],
 ];
 
 console.assert(mapTiles[0].length * TILE_SIZE >= MAX_WIDTH, 'Not enough map tile columns to cover MAX_WIDTH');
 console.assert(mapTiles.length * TILE_SIZE >= MAX_HEIGHT, 'Not enough map tile rows to cover MAX_HEIGHT');
 
 const tileTypes = [
-  {
+  { // 0 - blocker
     bgURL: 'assets/tile0.png',
     blocker: true,
   },
-  {
+  { // 1 - corridor
     bgURL: 'assets/tile1.png',
   },
-  {
+  { // 2 - warning
     bgURL: 'assets/tile2.png',
   },
-  {
+  { // 3 - safe
     bgURL: 'assets/tile3.png',
     allowedDuringPing: true
   },
-  {
-    // passable glass
+  { // 4 - passable glass
     transparent: true,
   },
-  {
-    // non-passable glass
+  { // 5 - non-passable glass
     transparent: true,
     blocker: true,
   },
@@ -97,9 +98,12 @@ const tileTypes = [
 
 const mapObjects = [
   {
-    x: 600,
-    y: 300,
-    assetURL: 'assets/window0.png',
+    type: 'terminal',
+    id: 'terminal1',
+    readCount: 0,
+    x: 1500,
+    y: 380,
+    assetURL: 'assets/terminal.png',
   },
 ];
 
@@ -137,16 +141,32 @@ if (DEBUG && useGridmarks) {
 
 const mapWalls = [
   {
-    id: 'initial-block',
     floating: true, // floating walls are not on the edge of blocking tiles - only these are considered for movement blocks
                     // (Typically these are manually added walls added, when we want to block a location that would be normally accessible.)
-    x: 500,
-    y: 1000,
+    x: 1400,
+    y: 700,
+    orientation: 'horizontal'
+  },
+  {
+    id: 'first-door',
+    floating: true,
+    x: 1500,
+    y: 700,
+    orientation: 'horizontal'
+  },
+  {
+    floating: true,
+    x: 1600,
+    y: 700,
     orientation: 'horizontal'
   }
 ];
 
-const floatingWalls = mapWalls.filter(w => w.floating);
+let floatingWalls = [];
+function updateFloatingWalls() {
+  floatingWalls = mapWalls.filter(w => w.floating);
+}
+updateFloatingWalls();
 
 (function addWalls() {
   mapTiles.forEach((row, rowIndex) => {
@@ -224,17 +244,22 @@ function canMoveTo(position) {
   // check for custom floating walls:
   let wallHit = false;
   floatingWalls.forEach(wall => {
+    // We're generous with hitboxes, because there might be some bug here...
+    const padding = PLAYER_SIZE / 4;
+
     if (wall.orientation === 'horizontal') {
       const min = Math.min(player.y, position.y);
       const max = Math.max(player.y, position.y);
-      const playerAlignedWithWall = player.x > wall.x && player.x < wall.x + TILE_SIZE; // currently we only support tile-wide walls
+      // NB: currently we only support tile-wide walls
+      const playerAlignedWithWall = wall.x - padding < player.x && player.x < wall.x + TILE_SIZE + padding;
       if (playerAlignedWithWall && min < wall.y && wall.y < max) {
         wallHit = true;
       }
     } else {
       const min = Math.min(player.x, position.x);
       const max = Math.max(player.x, position.x);
-      const playerAlignedWithWall = player.y > wall.y && player.y < wall.y + TILE_SIZE; // currently we only support tile-wide walls
+      // NB: currently we only support tile-wide walls
+      const playerAlignedWithWall = wall.y - padding < player.y && player.y < wall.y + TILE_SIZE + padding;
       if (playerAlignedWithWall && min < wall.x && wall.x < max) {
         wallHit = true;
       }
@@ -487,10 +512,18 @@ const keysPressed = {
 
 function processInteraction() {
   // TODO: interact with objects - proximity checks
+  let terminal;
+  mapObjects.filter(o=>o.type==='terminal').forEach(o => {
+    if (Math.abs(player.x - o.x) < NEARBY_RADIUS && Math.abs(player.y - o.y) < NEARBY_RADIUS) {
+      terminal = o;
+    }
+  });
 
-  const sender = getRandomItem(['Eva', 'player']);
-  const msg = getRandomItem(['And yet an other message appears as if by magic!', 'Short message! Yes?']);
-  addMessage(msg, sender);
+  if (!terminal) {
+    console.log('No terminal nearby - this is fine, user could be just clicking');
+  } else {
+    readFromTerminal(terminal);
+  }
 }
 
 $(document).ready(function() {
