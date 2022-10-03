@@ -45,8 +45,8 @@ const viewport = {
 const mapTiles = [
   [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
   [1, 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 1, 2, 3, 3, 4, 4, 0, 0, 0, 0, 0],
-  [0, 1, 0, 0, 3, 4, 4, 0, 0, 0, 0, 0],
+  [0, 1, 2, 3, 3, 4, 4, 5, 0, 0, 0, 0],
+  [0, 1, 0, 0, 3, 4, 4, 5, 0, 0, 0, 0],
   [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
   [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0],
@@ -61,7 +61,7 @@ console.assert(mapTiles.length * TILE_SIZE >= MAX_HEIGHT, 'Not enough map tile r
 const tileTypes = [
   {
     bgURL: 'assets/tile0.png',
-    forbidden: true,
+    blocker: true,
   },
   {
     bgURL: 'assets/tile1.png',
@@ -74,8 +74,13 @@ const tileTypes = [
     allowedDuringPing: true
   },
   {
-    // NB: transparent areas are passable, window effects are created by walls and objects covering them partially
+    // passable glass
     transparent: true,
+  },
+  {
+    // non-passable glass
+    transparent: true,
+    blocker: true,
   },
 ];
 
@@ -127,7 +132,8 @@ if (DEBUG) {
       // check tile changes only backwards (from above and left), the other directions are covered by later tiles
       if (rowIndex > 0) {
         const tAbove = mapTiles[rowIndex-1][colIndex];
-        if (tAbove !== t && (t === 0 || tAbove === 0)) {
+        const tileAbove = tileTypes[tAbove];
+        if (tAbove !== t && (tile.blocker || tileAbove.blocker)) {
           mapWalls.push({
             x: colIndex * TILE_SIZE,
             y: rowIndex * TILE_SIZE,
@@ -137,7 +143,8 @@ if (DEBUG) {
       }
       if (colIndex > 0) {
         const tToLeft = mapTiles[rowIndex][colIndex-1];
-        if (tToLeft !== t && (t === 0 || tToLeft === 0)) {
+        const tileToLeft = tileTypes[tToLeft];
+        if (tToLeft !== t && (tile.blocker || tileToLeft.blocker)) {
           mapWalls.push({
             x: colIndex * TILE_SIZE,
             y: rowIndex * TILE_SIZE,
@@ -175,7 +182,7 @@ function getTileCoords(position) {
 }
 
 function canMoveTo(position) {
-  // disallows moving to forbidden tiles
+  // disallows moving to forbidden/blocker tiles
   const tileCoords = getTileCoords(position);
 
   // it is valid to check out of bounds (to allow for simple player size offsets going right/down),
@@ -194,7 +201,7 @@ function canMoveTo(position) {
 
   console.assert(tileType, 'Unexpected out of bounds position: ' + JSON.stringify(position));
 
-  return !tileType.forbidden;
+  return !tileType.blocker;
 }
 
 function getTimeDilationFactor(speed) {
