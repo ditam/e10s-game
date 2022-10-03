@@ -20,6 +20,7 @@ let ctx;
 let debugLog;
 let dayCountArea, timeCountArea, nextPingArea;
 let pingSweep;
+let msgLogArea;
 
 let dayCount = 105; // days in year
 let timeCount = 16 * 60 * 60 * 1000 + 187000; // ms in day
@@ -447,6 +448,14 @@ const keysPressed = {
   left:  false
 };
 
+function processInteraction() {
+  // TODO: interact with objects - proximity checks
+
+  const sender = getRandomItem(['Eva', 'player']);
+  const msg = getRandomItem(['And yet an other message appears as if by magic!', 'Short message! Yes?']);
+  addMessage(msg, sender);
+}
+
 $(document).ready(function() {
   debugLog = $('#debug-log');
 
@@ -457,6 +466,8 @@ $(document).ready(function() {
   pingSweep = $('#sweep');
   // FIXME: add transition property dynamically (does not seem to work with .css()?)
   //        toggling it could allow to start sweep far off-screen depending on player position (ie. at the actual edge of the map)
+
+  msgLogArea = $('#msg-log');
 
   const canvas = document.getElementById('main-canvas');
   $(canvas).attr('height', HEIGHT);
@@ -496,6 +507,11 @@ $(document).ready(function() {
       case 'KeyA':
       case 'ArrowLeft':
         keysPressed.left = true;
+        event.preventDefault();
+        break;
+      case 'KeyE':
+      case 'Enter':
+        processInteraction();
         event.preventDefault();
         break;
       case 'ShiftLeft':

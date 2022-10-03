@@ -49,3 +49,25 @@ canvas {
 #sweep.visible {
   left: 1600px;
 }
+
+#msg-log {
+  position: absolute;
+  bottom: 100px;
+  left: 80px;
+}
+
+#msg-log .msg {
+  line-height: 28px;
+  font-size: 25px;
+  font-family: monospace;
+  color: white;
+  text-shadow: 3px 3px 3px black;
+  margin-bottom: 12px;
+}
+
+#msg-log .msg.player {
+  color: #a7adff;
+  font-weight: 600;
+  font-style: italic;
+  text-shadow: 2px 2px 3px #060e34;
+}
