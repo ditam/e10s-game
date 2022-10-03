@@ -1,8 +1,8 @@
 
-const WIDTH = 800; // match to sweep .visible CSS rule or change from class-based to js-based sweep target position
-const MAX_WIDTH = 1200;
-const HEIGHT = 500;
-const MAX_HEIGHT = 800;
+const WIDTH = 1600; // match to sweep .visible CSS rule or change from class-based to js-based sweep target position
+const MAX_WIDTH = 2400;
+const HEIGHT = 900;
+const MAX_HEIGHT = 1600;
 const MAP_SCROLL_PADDING = 100;
 
 const TILE_SIZE = 100;
@@ -31,8 +31,8 @@ const playerImage = $('<img>').attr('src', 'assets/player.png').get(0);
 let playerAngle = 0; // radians, starting from x axis clockwise
 
 const player = {
-  x: 150,
-  y: 150
+  x: 50,
+  y: 50
 };
 
 const playerInViewport = {
@@ -46,14 +46,22 @@ const viewport = {
 };
 
 const mapTiles = [
-  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [1, 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 1, 2, 3, 3, 4, 4, 5, 0, 0, 0, 0],
-  [0, 1, 0, 0, 3, 4, 4, 5, 0, 0, 0, 0],
-  [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-  [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0],
-  [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0]
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 1, 2, 3, 3, 4, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 1, 0, 0, 3, 4, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 ];
 
 const mapWalls = [];
@@ -245,48 +253,49 @@ function updateTimeDisplay() {
 }
 
 function movePlayer() {
+  const playerSpeed = (DEBUG && keysPressed.shift) ? PLAYER_SPEED * 4 : PLAYER_SPEED;
   // move player according to current pressed keys
   if (keysPressed.up) {
-    if (!canMoveTo({x: player.x, y: player.y - PLAYER_SPEED})) {
+    if (!canMoveTo({x: player.x, y: player.y - playerSpeed})) {
       return;
     }
-    player.y = Math.max(0, player.y - PLAYER_SPEED);
+    player.y = Math.max(0, player.y - playerSpeed);
     playerInViewport.y = player.y - viewport.y;
     if (playerInViewport.y <= MAP_SCROLL_PADDING) { // TODO: use padding+speed in bounds checks?
-      viewport.y = Math.max(0, viewport.y - PLAYER_SPEED);
+      viewport.y = Math.max(0, viewport.y - playerSpeed);
       playerInViewport.y = player.y - viewport.y;
     }
   }
   if (keysPressed.right) {
-    if (!canMoveTo({x: player.x + PLAYER_SIZE/2 + PLAYER_SPEED, y: player.y})) {
+    if (!canMoveTo({x: player.x + PLAYER_SIZE/2 + playerSpeed, y: player.y})) {
       return;
     }
-    player.x = Math.min(MAX_WIDTH - PLAYER_SIZE/2, player.x + PLAYER_SPEED);
+    player.x = Math.min(MAX_WIDTH - PLAYER_SIZE/2, player.x + playerSpeed);
     playerInViewport.x = player.x - viewport.x;
     if (playerInViewport.x >= WIDTH - MAP_SCROLL_PADDING) {
-      viewport.x = Math.min(MAX_WIDTH - WIDTH, viewport.x + PLAYER_SPEED);
+      viewport.x = Math.min(MAX_WIDTH - WIDTH, viewport.x + playerSpeed);
       playerInViewport.x = player.x - viewport.x;
     }
   }
   if (keysPressed.down) {
-    if (!canMoveTo({x: player.x, y: player.y + PLAYER_SIZE/2 + PLAYER_SPEED})) {
+    if (!canMoveTo({x: player.x, y: player.y + PLAYER_SIZE/2 + playerSpeed})) {
       return;
     }
-    player.y = Math.min(MAX_HEIGHT - PLAYER_SIZE/2, player.y + PLAYER_SPEED);
+    player.y = Math.min(MAX_HEIGHT - PLAYER_SIZE/2, player.y + playerSpeed);
     playerInViewport.y = player.y - viewport.y;
     if (playerInViewport.y >= HEIGHT- MAP_SCROLL_PADDING) {
-      viewport.y = Math.min(MAX_HEIGHT - HEIGHT, viewport.y + PLAYER_SPEED);
+      viewport.y = Math.min(MAX_HEIGHT - HEIGHT, viewport.y + playerSpeed);
       playerInViewport.y = player.y - viewport.y;
     }
   }
   if (keysPressed.left) {
-    if (!canMoveTo({x: player.x - PLAYER_SPEED, y: player.y})) {
+    if (!canMoveTo({x: player.x - playerSpeed, y: player.y})) {
       return;
     }
-    player.x = Math.max(0, player.x - PLAYER_SPEED);
+    player.x = Math.max(0, player.x - playerSpeed);
     playerInViewport.x = player.x - viewport.x;
     if (playerInViewport.x <= MAP_SCROLL_PADDING) {
-      viewport.x = Math.max(0, viewport.x - PLAYER_SPEED);
+      viewport.x = Math.max(0, viewport.x - playerSpeed);
       playerInViewport.x = player.x - viewport.x;
     }
   }
@@ -488,6 +497,11 @@ $(document).ready(function() {
         keysPressed.left = true;
         event.preventDefault();
         break;
+      case 'ShiftLeft':
+      case 'ShiftRight':
+        keysPressed.shift = true;
+        event.preventDefault();
+        break;
       case 'Space':
         event.preventDefault();
         break;
@@ -511,6 +525,10 @@ $(document).ready(function() {
       case 'KeyA':
       case 'ArrowLeft':
         keysPressed.left = false;
+        break;
+      case 'ShiftLeft':
+      case 'ShiftRight':
+        keysPressed.shift = false;
         break;
     }
   });
