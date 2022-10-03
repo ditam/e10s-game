@@ -316,8 +316,8 @@ function updateTimeDisplay() {
   timeCountLeft = timeToNextPing-pingSeconds*1000;
   let pingMs = timeCountLeft;
 
-  //pingSeconds = (pingSeconds+'').padStart(2, '0'); // we don't need to ping this as ET ping time is always <10
-  pingMs = (pingMs+'').padStart(3, '0');
+  //pingSeconds = (pingSeconds+'').padStart(2, '0'); // we don't need to pad this as ET ping time is always <10
+  pingMs = (Math.floor(pingMs/10)+'').padStart(2, '0');
   nextPingArea.text(`${pingSeconds}.${pingMs}`);
 }
 

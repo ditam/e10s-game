@@ -137,6 +137,10 @@ const terminalMessages = {
       sender: 'Eva',
       text: 'I will open your room doors now. Please proceed with caution.',
       effect: function() {
+        // reveal 10s timer
+        nextPingArea.show();
+
+        // open door
         const doorIndex = mapWalls.findIndex(wall => wall.id==='first-door');
         console.assert(doorIndex > -1, 'Could not find door to open...');
         mapWalls.splice(doorIndex, 1);
