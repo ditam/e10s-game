@@ -8,10 +8,10 @@ const MAP_SCROLL_PADDING = 180;
 const TILE_SIZE = 100;
 
 const PLAYER_SIZE = 56;
-const PLAYER_SPEED = 4;
+const PLAYER_SPEED = 3;
 // NB: the current collision detection might leave PLAYER_SPEED-1 sized gaps
 
-const NEARBY_RADIUS = 250;
+const NEARBY_RADIUS = 120;
 
 const SWEEP_DURATION = 2500; // should match CSS until we can add it dynamically
 const SWEEP_WIDTH = 150;
@@ -28,19 +28,21 @@ let dayCount = 105; // days in year
 let timeCount = 16 * 60 * 60 * 1000 + 187000; // ms in day
 let lastPing = timeCount;
 
-let shipSpeed = 0.7; // fraction of c
+let shipSpeed = 0.6; // fraction of c
 
 const playerImage = $('<img>').attr('src', 'assets/player.png').get(0);
 let playerAngle = 0; // radians, starting from x axis clockwise
 
+const curioImage = $('<img>').attr('src', 'assets/marker.png').get(0);
+
 const player = {
-  x: 1500,
-  y: 500
+  x: 2100,
+  y: 200
 };
 
 const viewport = {
-  x: 800,
-  y: 200
+  x: 900,
+  y: 000
 };
 
 // this is just a shortcut, and it's error-prone to have it...
@@ -50,14 +52,14 @@ const playerInViewport = {
 };
 
 const mapTiles = [
-                                             // x -> player start 1500
+                                                               // x -> player start 1500
   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 0, 5, 5, 5, 5],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 0, 5, 5, 5, 5], // y -> player start 500
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 5, 5, 5],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 5],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 0, 5], // y -> player start 500
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 3, 3, 0, 0, 0, 5, 5, 5, 5],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 3, 3, 0, 0, 0, 5, 5, 5, 5],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 3, 3, 0, 0, 3, 3, 5, 5, 5],
   [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 3, 5, 5, 5],
   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 5, 5, 5],
   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 5],
@@ -101,6 +103,14 @@ const mapObjects = [
     type: 'terminal',
     id: 'terminal1',
     readCount: 0,
+    x: 2000,
+    y: 80,
+    assetURL: 'assets/terminal.png',
+  },
+  {
+    type: 'terminal',
+    id: 'terminal2',
+    readCount: 0,
     x: 1500,
     y: 380,
     assetURL: 'assets/terminal.png',
@@ -141,25 +151,20 @@ if (DEBUG && useGridmarks) {
 
 const mapWalls = [
   {
+    id: 'first-door',
     floating: true, // floating walls are not on the edge of blocking tiles - only these are considered for movement blocks
                     // (Typically these are manually added walls added, when we want to block a location that would be normally accessible.)
-    x: 1400,
-    y: 700,
-    orientation: 'horizontal'
+    x: 2000,
+    y: 200,
+    orientation: 'vertical'
   },
   {
-    id: 'first-door',
+    id: 'cockpit-door',
     floating: true,
-    x: 1500,
+    x: 1900,
     y: 700,
-    orientation: 'horizontal'
+    orientation: 'vertical'
   },
-  {
-    floating: true,
-    x: 1600,
-    y: 700,
-    orientation: 'horizontal'
-  }
 ];
 
 let floatingWalls = [];
@@ -486,7 +491,7 @@ function drawFrame(timestamp) {
       ctx.fillRect(o.x - viewport.x, o.y - viewport.y, size, size);
     } else {
       // regular object
-      console.assert(o.assetURL && o.image, 'Malformed map object in drawFrame:', o);
+      console.assert(o.image, 'Malformed map object in drawFrame:', o);
       ctx.drawImage(o.image, o.x - viewport.x, o.y - viewport.y, o.w || 100, o.h || 100);
     }
   });
