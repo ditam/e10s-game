@@ -3,7 +3,7 @@ const WIDTH = 1600; // match to sweep .visible CSS rule or change from class-bas
 const MAX_WIDTH = 2400;
 const HEIGHT = 900;
 const MAX_HEIGHT = 1600;
-const MAP_SCROLL_PADDING = 180;
+const MAP_SCROLL_PADDING = 300;
 
 const TILE_SIZE = 100;
 
@@ -29,6 +29,7 @@ let timeCount = 16 * 60 * 60 * 1000 + 187000; // ms in day
 let lastPing = timeCount;
 
 let shipSpeed = 0.5; // fraction of c
+let shipSpeedLimit = 0.7;
 
 const playerImage = $('<img>').attr('src', 'assets/player.png').get(0);
 let playerAngle = 0; // radians, starting from x axis clockwise
@@ -46,29 +47,30 @@ const viewport = {
 };
 
 // this is just a shortcut, and it's error-prone to have it...
+// TODO: get rid of this
 const playerInViewport = {
   x: player.x - viewport.x,
   y: player.y - viewport.y
 };
 
 const mapTiles = [
-                                                               // x -> player start 1500
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 5],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 0, 5], // y -> player start 500
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 3, 3, 0, 0, 0, 5, 5, 5, 5],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 3, 3, 0, 0, 0, 5, 5, 5, 5],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 3, 3, 0, 0, 3, 3, 5, 5, 5],
-  [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 3, 5, 5, 5],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 5, 5, 5],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 5],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 5],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5],
+                                                               // x -> player start 2100
+  [5, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5],
+  [5, 2, 3, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 5],
+  [5, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 0, 5], // y -> player start 200
+  [0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5],
+  [1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 3, 3, 3, 0, 0, 0, 5, 5, 5, 5],
+  [1, 0, 0, 3, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 3, 3, 3, 0, 0, 0, 5, 5, 5, 5],
+  [1, 0, 3, 3, 3, 0, 1, 0, 1, 0, 0, 0, 1, 0, 3, 3, 3, 0, 0, 3, 3, 5, 5, 5],
+  [1, 0, 3, 3, 3, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 3, 5, 5, 5],
+  [1, 0, 3, 3, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 5, 5, 5],
+  [1, 0, 0, 3, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 5, 5, 5, 5],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 5, 5, 5, 5],
+  [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 5, 5],
+  [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 5],
+  [3, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 5],
+  [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 3, 3, 3, 0, 5],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 3, 3, 3, 5, 5],
 ];
 
 console.assert(mapTiles[0].length * TILE_SIZE >= MAX_WIDTH, 'Not enough map tile columns to cover MAX_WIDTH');
@@ -114,6 +116,28 @@ const mapObjects = [
     x: 1500,
     y: 380,
     assetURL: 'assets/terminal.png',
+  },
+  {
+    type: 'terminal',
+    id: 'terminal3',
+    readCount: 0,
+    x: 400,
+    y: 580,
+    assetURL: 'assets/terminal.png',
+  },
+  {
+    type: 'custom',
+    x: 2000,
+    y: 500,
+    assetURL: 'assets/cockpit.png',
+    w: 200,
+    h: 500,
+  },
+  {
+    type: 'speed-control',
+    x: 2000,
+    y: 700,
+    assetURL: 'assets/speed_control.png',
   },
 ];
 
@@ -329,6 +353,11 @@ function updateSpeedDisplay() {
 }
 
 function movePlayer() {
+  if (movementDisabled) {
+    // movement is disabled during game end - maybe later during special events too?
+    return;
+  }
+
   const playerSpeed = (DEBUG && keysPressed.shift) ? PLAYER_SPEED * 4 : PLAYER_SPEED;
   // move player according to current pressed keys
   if (keysPressed.up) {
@@ -406,6 +435,35 @@ function startPing() {
   }, SWEEP_DURATION + 500);
 }
 
+let movementDisabled = false;
+function endGame() {
+  const msg = $('<div></div').addClass('game-over-msg').insertAfter(msgLogArea);
+  msg.text('Game over!');
+  movementDisabled = true;
+
+  setTimeout(() => {
+    // reset to starting state
+    player.x = 2100;
+    player.y = 200;
+
+    viewport.x = 900;
+    viewport.y = 0;
+
+    playerInViewport.x = player.x - viewport.x;
+    playerInViewport.y = player.y - viewport.y;
+
+    shipSpeed = 0.5;
+    shipSpeedLimit = 0.7;
+
+    mapObjects.filter(o=>o.type === 'terminal').forEach(o=>{
+      o.readCount = 0;
+    });
+
+    movementDisabled = false;
+    msg.remove();
+  }, 4000);
+}
+
 let lastDrawTime = 0;
 let sweepPassedPlayer = false;
 function drawFrame(timestamp) {
@@ -433,7 +491,8 @@ function drawFrame(timestamp) {
       if (!tileType.allowedDuringPing) {
         console.warn('Ping - Busted!');
         pingSweep.addClass('triggered')
-        // TODO: game end logic
+        // TODO: play triggered sound
+        endGame();
       } else {
         console.log('Ping OK');
       }
@@ -523,8 +582,17 @@ const keysPressed = {
   left:  false
 };
 
-function processInteraction() {
-  // TODO: interact with objects - proximity checks
+function processInteraction(skip) {
+  // if speed control open, apply and close
+  const ss = $('#speed-selector');
+  if (ss.length) {
+    shipSpeed = roundTo1Decimal(parseFloat(ss.text()));
+    updateSpeedDisplay();
+    msgLogArea.empty();
+    ss.remove();
+    return;
+  }
+
   let terminal;
   mapObjects.filter(o=>o.type==='terminal').forEach(o => {
     if (Math.abs(player.x - o.x) < NEARBY_RADIUS && Math.abs(player.y - o.y) < NEARBY_RADIUS) {
@@ -534,9 +602,31 @@ function processInteraction() {
 
   if (!terminal) {
     console.log('No terminal nearby - this is fine, user could be just clicking');
+    // we also check for the speed control item
+    const speedControlIndex = mapObjects.findIndex(o=>o.type==='speed-control');
+    console.assert(speedControlIndex > -1, 'Couldnt find speed control');
+    const speedControl = mapObjects[speedControlIndex];
+    if (Math.abs(player.x - speedControl.x) < NEARBY_RADIUS && Math.abs(player.y - speedControl.y) < NEARBY_RADIUS) {
+      showSpeedControls(speedControl);
+    }
   } else {
-    readFromTerminal(terminal);
+    readFromTerminal(terminal, skip);
   }
+}
+
+function showSpeedControls(obj) {
+  msgLogArea.empty();
+  showMessage('Use left and right to set speed, enter to confirm.', 'system');
+  const ss = $('<div id="speed-selector"></div>').insertAfter(msgLogArea);
+  ss.css({
+    top: `${obj.y - viewport.y - 30}px`,
+    left: `${obj.x - viewport.x}px`
+  });
+  ss.text(shipSpeed);
+}
+
+function roundTo1Decimal(num) {
+  return Math.round(num * 10) / 10;
 }
 
 $(document).ready(function() {
@@ -573,7 +663,6 @@ $(document).ready(function() {
   ctx.lineWidth = 4;
 
   // keypress event listeners
-  // TODO: extend to WASD
   document.addEventListener('keydown', event => {
     switch(event.code) {
       case 'KeyW':
@@ -583,8 +672,14 @@ $(document).ready(function() {
         break;
       case 'KeyD':
       case 'ArrowRight':
-        keysPressed.right = true;
         event.preventDefault();
+        if ($('#speed-selector').length) {
+          let val = parseFloat($('#speed-selector').text());
+          val = roundTo1Decimal(Math.min(shipSpeedLimit, val+0.1));
+          $('#speed-selector').text(val);
+        } else {
+          keysPressed.right = true;
+        }
         break;
       case 'KeyS':
       case 'ArrowDown':
@@ -593,8 +688,14 @@ $(document).ready(function() {
         break;
       case 'KeyA':
       case 'ArrowLeft':
-        keysPressed.left = true;
         event.preventDefault();
+        if ($('#speed-selector').length) {
+          let val = parseFloat($('#speed-selector').text());
+          val = roundTo1Decimal(Math.max(0, val-0.1));
+          $('#speed-selector').text(val);
+        } else {
+          keysPressed.left = true;
+        }
         break;
       case 'KeyE':
       case 'Enter':
@@ -608,6 +709,10 @@ $(document).ready(function() {
         break;
       case 'Space':
         event.preventDefault();
+        break;
+      case 'Escape':
+        event.preventDefault();
+        processInteraction(true); // skip
         break;
     }
   });

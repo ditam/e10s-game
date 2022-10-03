@@ -45,7 +45,7 @@ function applyMsgLimit() {
 }
 
 
-function readFromTerminal(terminal) {
+function readFromTerminal(terminal, skip) {
   console.assert(terminal.id, 'Wrong terminal structure - no id:', terminal);
   console.assert('readCount' in terminal, 'Wrong terminal structure - no readCount:', terminal);
 
@@ -60,13 +60,28 @@ function readFromTerminal(terminal) {
 
   if (msgs.length-1 < terminal.readCount) {
     console.log('Terminal exhausted.');
-  } else {
-    const msg = msgs[terminal.readCount];
-    showMessage(msg.text, msg.sender, msg.immediate);
-    if (typeof msg.effect === 'function') {
-      msg.effect();
+  } else { // there are messages left
+    if (skip) {
+      // attempt to skip to end with all effects processed
+      let i = 20; // failsafe/max skip
+      while((msgs.length-1 >= terminal.readCount) && i) {
+        i--;
+        const msg = msgs[terminal.readCount];
+        showMessage(msg.text, msg.sender, true); // force immediate
+        if (typeof msg.effect === 'function') {
+          msg.effect();
+        }
+        terminal.readCount++;
+      }
+      console.log(`skipped ${20-i} messages.`);
+    } else {
+      const msg = msgs[terminal.readCount];
+      showMessage(msg.text, msg.sender, msg.immediate);
+      if (typeof msg.effect === 'function') {
+        msg.effect();
+      }
+      terminal.readCount++;
     }
-    terminal.readCount++;
   }
 }
 
@@ -185,6 +200,23 @@ const terminalMessages = {
         mapWalls.splice(doorIndex, 1);
         // TODO: play door opening sound
         updateFloatingWalls();
+      }
+    },
+  ],
+  terminal3: [
+    {
+      sender: 'Eva',
+      text: 'This is the control room for the radiation shields.'
+    },
+    {
+      sender: 'Eva',
+      text: 'If we push them into overdrive, we could reach even higher speeds.'
+    },
+    {
+      sender: 'system',
+      text: 'Radiation shields in overdrive.',
+      effect: function() {
+        shipSpeedLimit = 0.9;
       }
     },
   ]
