@@ -4,7 +4,6 @@ const MSG_LIMIT = 3;
 
 function addMessage(text, sender, immediate) {
   const msg = $('<div></div>').addClass('msg').addClass(sender);
-  msg.text(text[0]);
   msgLogArea.append(msg);
 
   if (sender === 'system') {
@@ -14,6 +13,7 @@ function addMessage(text, sender, immediate) {
   if (immediate) {
     msg.text(text);
   } else {
+    msg.text(text[0]);
     let typing = setInterval(() => {
       const currentContent = msg.text();
       if (currentContent === text) {

@@ -66,8 +66,6 @@ const mapTiles = [
   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 ];
 
-const mapWalls = [];
-
 console.assert(mapTiles[0].length * TILE_SIZE >= MAX_WIDTH, 'Not enough map tile columns to cover MAX_WIDTH');
 console.assert(mapTiles.length * TILE_SIZE >= MAX_HEIGHT, 'Not enough map tile rows to cover MAX_HEIGHT');
 
@@ -137,6 +135,19 @@ if (DEBUG && useGridmarks) {
   });
 })();
 
+const mapWalls = [
+  {
+    id: 'initial-block',
+    floating: true, // floating walls are not on the edge of blocking tiles - only these are considered for movement blocks
+                    // (Typically these are manually added walls added, when we want to block a location that would be normally accessible.)
+    x: 500,
+    y: 1000,
+    orientation: 'horizontal'
+  }
+];
+
+const floatingWalls = mapWalls.filter(w => w.floating);
+
 (function addWalls() {
   mapTiles.forEach((row, rowIndex) => {
     row.forEach((t, colIndex) => {
@@ -196,7 +207,7 @@ function getTileCoords(position) {
 }
 
 function canMoveTo(position) {
-  // disallows moving to forbidden/blocker tiles
+  // disallows moving to forbidden/blocker tiles and through custom walls
   const tileCoords = getTileCoords(position);
 
   // it is valid to check out of bounds (to allow for simple player size offsets going right/down),
@@ -209,6 +220,32 @@ function canMoveTo(position) {
   ) {
     return false;
   }
+
+  // check for custom floating walls:
+  let wallHit = false;
+  floatingWalls.forEach(wall => {
+    if (wall.orientation === 'horizontal') {
+      const min = Math.min(player.y, position.y);
+      const max = Math.max(player.y, position.y);
+      const playerAlignedWithWall = player.x > wall.x && player.x < wall.x + TILE_SIZE; // currently we only support tile-wide walls
+      if (playerAlignedWithWall && min < wall.y && wall.y < max) {
+        wallHit = true;
+      }
+    } else {
+      const min = Math.min(player.x, position.x);
+      const max = Math.max(player.x, position.x);
+      const playerAlignedWithWall = player.y > wall.y && player.y < wall.y + TILE_SIZE; // currently we only support tile-wide walls
+      if (playerAlignedWithWall && min < wall.x && wall.x < max) {
+        wallHit = true;
+      }
+    }
+  });
+  if (wallHit) {
+    return false;
+    // TODO: play door locked sound effect
+  }
+
+  // if in bounds, and not going through a wall, only the tile type determines accessability:
 
   const tileTypeIndex = mapTiles[tileCoords.y][tileCoords.x];
   const tileType = tileTypes[tileTypeIndex];
