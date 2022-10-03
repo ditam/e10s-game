@@ -31,18 +31,19 @@ const playerImage = $('<img>').attr('src', 'assets/player.png').get(0);
 let playerAngle = 0; // radians, starting from x axis clockwise
 
 const player = {
-  x: 50,
-  y: 50
-};
-
-const playerInViewport = {
-  x: player.x,
-  y: player.y
+  x: 450,
+  y: 1050
 };
 
 const viewport = {
   x: 0,
-  y: 0
+  y: 450
+};
+
+// this is just a shortcut, and it's error-prone to have it...
+const playerInViewport = {
+  x: player.x - viewport.x,
+  y: player.y - viewport.y
 };
 
 const mapTiles = [
