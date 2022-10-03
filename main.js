@@ -3,7 +3,7 @@ const WIDTH = 1600; // match to sweep .visible CSS rule or change from class-bas
 const MAX_WIDTH = 2400;
 const HEIGHT = 900;
 const MAX_HEIGHT = 1600;
-const MAP_SCROLL_PADDING = 100;
+const MAP_SCROLL_PADDING = 180;
 
 const TILE_SIZE = 100;
 
