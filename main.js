@@ -45,8 +45,8 @@ const viewport = {
 const mapTiles = [
   [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
   [1, 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 1, 2, 3, 3, 0, 0, 0, 0, 0, 0, 0],
-  [0, 1, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0],
+  [0, 1, 2, 3, 3, 4, 4, 0, 0, 0, 0, 0],
+  [0, 1, 0, 0, 3, 4, 4, 0, 0, 0, 0, 0],
   [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
   [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0],
@@ -73,10 +73,17 @@ const tileTypes = [
     bgURL: 'assets/tile3.png',
     allowedDuringPing: true
   },
+  {
+    // NB: transparent areas are passable, window effects are created by walls and objects covering them partially
+    transparent: true,
+  },
 ];
 
 (function addImageRefToTileTypes() {
   tileTypes.forEach(tile => {
+    if (tile.transparent) {
+      return;
+    }
     const image = $('<img>').attr('src', tile.bgURL);
     tile.image = image.get(0);
   });
@@ -87,7 +94,6 @@ const tileTypes = [
     row.forEach((t, colIndex) => {
       const tile = tileTypes[t];
       console.assert(typeof tile === 'object', 'Invalid tile type: ' + t + ' -> ' + tile);
-      console.assert(tile.image, 'Missing tile image for tile type ' + t);
 
       // check tile changes only backwards (from above and left), the other directions are covered by later tiles
       if (rowIndex > 0) {
@@ -114,6 +120,22 @@ const tileTypes = [
   });
 })();
 
+const startField = [];
+
+function getRandomItem(array) {
+  return array[Math.floor(Math.random() * array.length)];
+}
+
+(function generateStarField() {
+  for (let i=0;i<300;i++) {
+    startField.push({
+      x: Math.floor(Math.random()*WIDTH),
+      y: Math.floor(Math.random()*HEIGHT),
+      color: getRandomItem(['#605050', '#406080', '#f0e090', '#f5eec0', '#ffffff']),
+      size: Math.floor(Math.random()*5),
+    });
+  }
+})();
 
 const mapObjects = [];
 
@@ -288,8 +310,19 @@ function drawFrame(timestamp) {
     }
   }
 
-  // clear canvas
-  ctx.clearRect(0, 0, WIDTH, HEIGHT);
+  // clear canvas -- not needed since starfield backdrop
+  // ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+  // draw star field
+  // TODO: use separate canvas - only draw once (either layer or draw from canvas image source)
+  ctx.save();
+  ctx.fillStyle = '#252015';
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  startField.forEach((s) => {
+    ctx.fillStyle = s.color;
+    ctx.fillRect(s.x, s.y, s.size, s.size);
+  });
+  ctx.restore();
 
   // print debug info to DOM
   const tileCoordsBeforeMove = getTileCoords(player);
@@ -306,7 +339,11 @@ function drawFrame(timestamp) {
   mapTiles.forEach((row, rowIndex) => {
     row.forEach((t, colIndex) => {
       const tile = tileTypes[t];
+
       console.assert(typeof tile === 'object', 'Invalid tile type: ' + t + ' -> ' + tile);
+      if (tile.transparent) {
+        return; // transparent tiles are simply not drawn
+      }
       console.assert(tile.image, 'Missing tile image for tile type ' + t);
 
       ctx.drawImage(tile.image, colIndex*TILE_SIZE - viewport.x, rowIndex*TILE_SIZE - viewport.y, TILE_SIZE, TILE_SIZE);
