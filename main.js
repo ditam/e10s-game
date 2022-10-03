@@ -79,13 +79,42 @@ const tileTypes = [
   },
 ];
 
-(function addImageRefToTileTypes() {
+const mapObjects = [
+  {
+    x: 600,
+    y: 300,
+    assetURL: 'assets/window0.png',
+  },
+];
+
+if (DEBUG) {
+  for (let i=0; i<25; i++) {
+    for (let j=0; j<20; j++) {
+      mapObjects.push({
+        type: 'gridmark',
+        x: i*50-2,
+        y: j*50-2
+      });
+    }
+  }
+}
+
+(function addImageRefToTileTypesAndObjects() {
   tileTypes.forEach(tile => {
     if (tile.transparent) {
       return;
     }
     const image = $('<img>').attr('src', tile.bgURL);
+    // FIXME: use dictionary for collecting image elements - no need for duplicates
     tile.image = image.get(0);
+  });
+  mapObjects.forEach(o => {
+    if (o.type === 'gridmark') {
+      return;
+    }
+    console.assert(o.assetURL, 'Malformed map object: ', o);
+    const image = $('<img>').attr('src', o.assetURL);
+    o.image = image.get(0);
   });
 })();
 
@@ -132,24 +161,10 @@ function getRandomItem(array) {
       x: Math.floor(Math.random()*WIDTH),
       y: Math.floor(Math.random()*HEIGHT),
       color: getRandomItem(['#605050', '#406080', '#f0e090', '#f5eec0', '#ffffff']),
-      size: Math.floor(Math.random()*5),
+      size: Math.floor(Math.random()*4) +1,
     });
   }
 })();
-
-const mapObjects = [];
-
-if (DEBUG) {
-  for (let i=0; i<25; i++) {
-    for (let j=0; j<20; j++) {
-      mapObjects.push({
-        type: 'gridmark',
-        x: i*50-2,
-        y: j*50-2
-      });
-    }
-  }
-}
 
 function getTileCoords(position) {
   console.assert('x' in position && 'y' in position, 'Invalid position: ' + position);
@@ -362,9 +377,15 @@ function drawFrame(timestamp) {
   // draw objects
   ctx.save();
   mapObjects.forEach(o => {
-    ctx.fillStyle = o.type === 'gridmark' ? 'gray' : 'red';
-    const size = 2;
-    ctx.fillRect(o.x - viewport.x, o.y - viewport.y, size, size);
+    if (o.type === 'gridmark') {
+      ctx.fillStyle = 'gray';
+      const size = 2;
+      ctx.fillRect(o.x - viewport.x, o.y - viewport.y, size, size);
+    } else {
+      // regular object
+      console.assert(o.assetURL && o.image, 'Malformed map object in drawFrame:', o);
+      ctx.drawImage(o.image, o.x - viewport.x, o.y - viewport.y, o.w || 100, o.h || 100);
+    }
   });
   ctx.restore();
 
