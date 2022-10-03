@@ -7,8 +7,8 @@ const MAP_SCROLL_PADDING = 100;
 
 const TILE_SIZE = 100;
 
-const PLAYER_SIZE = 20;
-const PLAYER_SPEED = 10;
+const PLAYER_SIZE = 56;
+const PLAYER_SPEED = 4;
 // NB: the current collision detection might leave PLAYER_SPEED-1 sized gaps
 
 const SWEEP_DURATION = 2500; // should match CSS until we can add it dynamically
@@ -26,6 +26,9 @@ let timeCount = 16 * 60 * 60 * 1000 + 187000; // ms in day
 let lastPing = timeCount;
 
 let shipSpeed = 0.7; // fraction of c
+
+const playerImage = $('<img>').attr('src', 'assets/player.png').get(0);
+let playerAngle = 0; // radians, starting from x axis clockwise
 
 const player = {
   x: 150,
@@ -254,10 +257,10 @@ function movePlayer() {
     }
   }
   if (keysPressed.right) {
-    if (!canMoveTo({x: player.x + PLAYER_SIZE + PLAYER_SPEED, y: player.y})) {
+    if (!canMoveTo({x: player.x + PLAYER_SIZE/2 + PLAYER_SPEED, y: player.y})) {
       return;
     }
-    player.x = Math.min(MAX_WIDTH - PLAYER_SIZE, player.x + PLAYER_SPEED);
+    player.x = Math.min(MAX_WIDTH - PLAYER_SIZE/2, player.x + PLAYER_SPEED);
     playerInViewport.x = player.x - viewport.x;
     if (playerInViewport.x >= WIDTH - MAP_SCROLL_PADDING) {
       viewport.x = Math.min(MAX_WIDTH - WIDTH, viewport.x + PLAYER_SPEED);
@@ -265,10 +268,10 @@ function movePlayer() {
     }
   }
   if (keysPressed.down) {
-    if (!canMoveTo({x: player.x, y: player.y + PLAYER_SIZE + PLAYER_SPEED})) {
+    if (!canMoveTo({x: player.x, y: player.y + PLAYER_SIZE/2 + PLAYER_SPEED})) {
       return;
     }
-    player.y = Math.min(MAX_HEIGHT - PLAYER_SIZE, player.y + PLAYER_SPEED);
+    player.y = Math.min(MAX_HEIGHT - PLAYER_SIZE/2, player.y + PLAYER_SPEED);
     playerInViewport.y = player.y - viewport.y;
     if (playerInViewport.y >= HEIGHT- MAP_SCROLL_PADDING) {
       viewport.y = Math.min(MAX_HEIGHT - HEIGHT, viewport.y + PLAYER_SPEED);
@@ -285,6 +288,24 @@ function movePlayer() {
       viewport.x = Math.max(0, viewport.x - PLAYER_SPEED);
       playerInViewport.x = player.x - viewport.x;
     }
+  }
+  // set player orientation
+  if (keysPressed.up && keysPressed.right) {
+    playerAngle = 315 * Math.PI / 180;
+  } else if (keysPressed.right && keysPressed.down) {
+    playerAngle = 45 * Math.PI / 180;
+  } else if (keysPressed.down && keysPressed.left) {
+    playerAngle = 135 * Math.PI / 180;
+  } else if (keysPressed.left && keysPressed.up) {
+    playerAngle = 225 * Math.PI / 180;
+  } else if (keysPressed.up) {
+    playerAngle = 270 * Math.PI / 180;
+  } else if (keysPressed.right) {
+    playerAngle = 0 * Math.PI / 180;
+  } else if (keysPressed.down) {
+    playerAngle = 90 * Math.PI / 180;
+  } else if (keysPressed.left) {
+    playerAngle = 180 * Math.PI / 180;
   }
 }
 
@@ -397,7 +418,12 @@ function drawFrame(timestamp) {
   ctx.restore();
 
   // draw player
-  ctx.fillRect(playerInViewport.x, playerInViewport.y, 20, 20);
+  ctx.save();
+  ctx.translate(playerInViewport.x, playerInViewport.y)
+  ctx.rotate(playerAngle);
+  ctx.translate(-playerInViewport.x, -playerInViewport.y)
+  ctx.drawImage(playerImage, playerInViewport.x-PLAYER_SIZE/2, playerInViewport.y-PLAYER_SIZE/2, PLAYER_SIZE, PLAYER_SIZE);
+  ctx.restore();
 
   requestAnimationFrame(drawFrame);
 }
