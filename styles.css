@@ -1,6 +1,6 @@
 body {
-  background-color: #eee;
-  padding: 50px;
+  background-color: rgb(40, 40, 40);
+  padding: 10px;
   user-select: none;
 }
 
@@ -11,16 +11,25 @@ body {
 
 canvas {
   background-color: white;
-  border: 1px solid gray;
 }
 
-#time-display {
+#hud-header {
+  width: 1560px; /* match WIDTH -2*padding */
   padding: 20px;
   background-color: rgb(2, 2, 54);
   color: white;
   font-family: monospace;
   font-size: 20px;
   line-height: 25px;
+}
+
+#time-display {
+  display: inline-block;
+  width: 60%;
+}
+
+#speed-display {
+  display: inline-block;
 }
 
 #next-ping-value {

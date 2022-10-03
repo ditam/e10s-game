@@ -178,7 +178,7 @@ const terminalMessages = {
     {
       sender: 'Eva',
       text: 'The scans are scheduled according to Earth time. We are currently travelling at ' +
-        '180 000 kilometers a second. You are perceiving the effects of time dilation.',
+        '150 000 kilometers a second. You are perceiving the effects of time dilation.',
       effect: function() {
         const doorIndex = mapWalls.findIndex(wall => wall.id==='cockpit-door');
         console.assert(doorIndex > -1, 'Could not find door to open...');

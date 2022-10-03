@@ -20,7 +20,7 @@ let DEBUG = location && location.hostname==='localhost';
 
 let ctx;
 let debugLog;
-let dayCountArea, timeCountArea, nextPingArea;
+let dayCountArea, timeCountArea, nextPingArea, speedArea, dilationArea;
 let pingSweep;
 let msgLogArea;
 
@@ -28,7 +28,7 @@ let dayCount = 105; // days in year
 let timeCount = 16 * 60 * 60 * 1000 + 187000; // ms in day
 let lastPing = timeCount;
 
-let shipSpeed = 0.6; // fraction of c
+let shipSpeed = 0.5; // fraction of c
 
 const playerImage = $('<img>').attr('src', 'assets/player.png').get(0);
 let playerAngle = 0; // radians, starting from x axis clockwise
@@ -321,6 +321,13 @@ function updateTimeDisplay() {
   nextPingArea.text(`${pingSeconds}.${pingMs}`);
 }
 
+// it's enough to call this after the speed changes, which is not every frame!
+function updateSpeedDisplay() {
+  speedArea.text(`${shipSpeed} c (~${Math.round(299792 * shipSpeed)} km/s)`);
+  const dilationPercent = getTimeDilationFactor(shipSpeed) * 100 - 100;
+  dilationArea.text(`, time dilation ${Math.floor(dilationPercent)}%`);
+}
+
 function movePlayer() {
   const playerSpeed = (DEBUG && keysPressed.shift) ? PLAYER_SPEED * 4 : PLAYER_SPEED;
   // move player according to current pressed keys
@@ -403,9 +410,10 @@ let lastDrawTime = 0;
 let sweepPassedPlayer = false;
 function drawFrame(timestamp) {
   // update timers
-  // TODO: apply time dilation
   const timeSinceLastDraw = timestamp-lastDrawTime;
-  timeCount+=Math.round(timeSinceLastDraw);
+  const timeDilationFactor = getTimeDilationFactor(shipSpeed);
+  const timeSpentOnEarth = timeSinceLastDraw / timeDilationFactor;
+  timeCount+=Math.round(timeSpentOnEarth);
   if (timeCount - lastPing > 10000) {
     startPing();
   }
@@ -537,6 +545,10 @@ $(document).ready(function() {
   dayCountArea = $('#day-value');
   timeCountArea = $('#time-value');
   nextPingArea = $('#next-ping-value');
+  speedArea = $('#speed-value');
+  dilationArea = $('#time-dilation-value');
+
+  updateSpeedDisplay();
 
   pingSweep = $('#sweep');
   // FIXME: add transition property dynamically (does not seem to work with .css()?)
