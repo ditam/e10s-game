@@ -23,6 +23,8 @@ canvas {
   font-family: monospace;
   font-size: 20px;
   line-height: 25px;
+
+  visibility: hidden; /* toggled from JS */
 }
 
 #time-display {
@@ -88,6 +90,10 @@ canvas {
   font-weight: 600;
   font-style: italic;
   text-shadow: 2px 2px 3px #060e34;
+}
+
+#msg-log .msg.system {
+  font-weight: 600;
 }
 
 #speed-selector {

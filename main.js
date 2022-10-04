@@ -31,6 +31,8 @@ let lastPing = timeCount;
 let shipSpeed = 0.5; // fraction of c
 let shipSpeedLimit = 0.7;
 
+let sweepDisabled = false;
+
 const playerImage = $('<img>').attr('src', 'assets/player.png').get(0);
 let playerAngle = 0; // radians, starting from x axis clockwise
 
@@ -57,20 +59,20 @@ const mapTiles = [
                                                                // x -> player start 2100
   [5, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5],
   [5, 2, 3, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 5],
-  [5, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 0, 5], // y -> player start 200
-  [0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5],
+  [5, 0, 1, 0, 0, 0, 0, 1, 5, 5, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 0, 5], // y -> player start 200
+  [0, 1, 1, 0, 0, 0, 1, 1, 5, 5, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5],
   [1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 3, 3, 3, 0, 0, 0, 5, 5, 5, 5],
   [1, 0, 0, 3, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 3, 3, 3, 0, 0, 0, 5, 5, 5, 5],
   [1, 0, 3, 3, 3, 0, 1, 0, 1, 0, 0, 0, 1, 0, 3, 3, 3, 0, 0, 3, 3, 5, 5, 5],
   [1, 0, 3, 3, 3, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 3, 5, 5, 5],
   [1, 0, 3, 3, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 5, 5, 5],
-  [1, 0, 0, 3, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 5, 5, 5, 5],
-  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 5, 5, 5, 5],
+  [1, 0, 0, 3, 0, 0, 0, 0, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 5, 5, 5, 5],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 5, 5, 5, 5, 1, 1, 0, 5, 5, 5, 5],
   [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 5, 5],
   [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 5],
   [3, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 5],
-  [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 3, 3, 3, 0, 5],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 3, 3, 3, 5, 5],
+  [3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 3, 3, 3, 0, 5],
+  [3, 5, 5, 5, 5, 5, 5, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 3, 3, 3, 5, 5],
 ];
 
 console.assert(mapTiles[0].length * TILE_SIZE >= MAX_WIDTH, 'Not enough map tile columns to cover MAX_WIDTH');
@@ -110,20 +112,9 @@ const mapObjects = [
     assetURL: 'assets/terminal.png',
   },
   {
-    type: 'terminal',
-    id: 'terminal2',
-    readCount: 0,
-    x: 1500,
-    y: 380,
-    assetURL: 'assets/terminal.png',
-  },
-  {
-    type: 'terminal',
-    id: 'terminal3',
-    readCount: 0,
-    x: 400,
-    y: 580,
-    assetURL: 'assets/terminal.png',
+    x: 2100,
+    y: 200,
+    assetURL: 'assets/pod_open.png',
   },
   {
     type: 'custom',
@@ -135,9 +126,95 @@ const mapObjects = [
   },
   {
     type: 'speed-control',
+    id: 'speed-control',
     x: 2000,
     y: 700,
     assetURL: 'assets/speed_control.png',
+  },
+  {
+    type: 'terminal',
+    id: 'terminal2',
+    readCount: 0,
+    x: 1500,
+    y: 380,
+    assetURL: 'assets/terminal.png',
+  },
+  {
+    x: 1600,
+    y: 450,
+    assetURL: 'assets/pod_open.png',
+  },
+  {
+    x: 1600,
+    y: 550,
+    assetURL: 'assets/pod_open.png',
+  },
+  {
+    x: 1400,
+    y: 450,
+    assetURL: 'assets/pod_open.png',
+  },
+  {
+    x: 1400,
+    y: 550,
+    assetURL: 'assets/pod_closed.png',
+  },
+  {
+    type: 'terminal',
+    id: 'terminal3', // shield room on left
+    readCount: 0,
+    x: 400,
+    y: 580,
+    assetURL: 'assets/terminal.png',
+  },
+  {
+    type: 'terminal',
+    id: 'terminal4', // terminal 4 in bottom right
+    readCount: 0,
+    x: 1900,
+    y: 1380,
+    assetURL: 'assets/terminal.png',
+  },
+  {
+    x: 2000,
+    y: 1500,
+    assetURL: 'assets/pod_open.png',
+  },
+  {
+    x: 2100,
+    y: 1500,
+    assetURL: 'assets/pod_closed.png',
+  },
+  {
+    type: 'terminal',
+    id: 'terminal5', // terminal 5 in bottom left
+    readCount: 0,
+    x: 0,
+    y: 1280,
+    assetURL: 'assets/terminal.png',
+  },
+  {
+    x: 0,
+    y: 1380,
+    assetURL: 'assets/pod_closed.png',
+  },
+  {
+    x: 0,
+    y: 1460,
+    assetURL: 'assets/pod_closed.png',
+  },
+  {
+    x: 0,
+    y: 1520,
+    assetURL: 'assets/pod_closed.png',
+  },
+  {
+    type: 'terminal',
+    id: 'terminal6', // terminal 6 in top left
+    readCount: 0,
+    x: 200,
+    y: -20,
+    assetURL: 'assets/terminal.png',
   },
 ];
 
@@ -443,6 +520,7 @@ function endGame() {
 
   setTimeout(() => {
     // reset to starting state
+    // TODO: just make a state object, clone it at start, and reload it here...
     player.x = 2100;
     player.y = 200;
 
@@ -455,6 +533,8 @@ function endGame() {
     shipSpeed = 0.5;
     bgMusic.playbackRate = 1;
     shipSpeedLimit = 0.7;
+    sweepDisabled = false;
+    nextPingArea.show();
 
     mapObjects.filter(o=>o.type === 'terminal').forEach(o=>{
       o.readCount = 0;
@@ -473,17 +553,18 @@ function drawFrame(timestamp) {
   const timeDilationFactor = getTimeDilationFactor(shipSpeed);
   const timeSpentOnEarth = timeSinceLastDraw / timeDilationFactor;
   timeCount+=Math.round(timeSpentOnEarth);
-  if (timeCount - lastPing > 10000) {
+  if ((timeCount - lastPing > 10000) && !sweepDisabled) {
     startPing();
   }
   lastDrawTime = timestamp;
   updateTimeDisplay();
 
   // sweep hit scanning
-  if (timeCount - lastPing < SWEEP_DURATION) {
+  // TODO: it's a bit nasty that we have to apply for time dilation here (TWICE!) - we should track both original and dilated time instead
+  if (timeCount - lastPing < SWEEP_DURATION / timeDilationFactor) {
     // a sweep is in progress: we estimate the sweeper position (not exact, as it is controlled by a css transition)
     // we do a position check the first time we find the sweep further right than the player
-    const sweepEstimate = (timeCount - lastPing)/SWEEP_DURATION * (WIDTH+SWEEP_WIDTH);
+    const sweepEstimate = ((timeCount - lastPing)/SWEEP_DURATION * (WIDTH+SWEEP_WIDTH)) * timeDilationFactor;
     if (!sweepPassedPlayer && sweepEstimate > player.x - viewport.x) { // NB: for now, we sweep only the viewport
       sweepPassedPlayer = true;
       const playerTile = getTileCoords(player);
@@ -493,11 +574,14 @@ function drawFrame(timestamp) {
         console.warn('Ping - Busted!');
         pingSweep.addClass('triggered')
         // TODO: play triggered sound
+        console.log('triggered:', timeCount, lastPing, sweepEstimate, sweepPassedPlayer);
         endGame();
       } else {
         console.log('Ping OK');
       }
     }
+
+    console.log('hitscan start:', timeCount, lastPing, sweepEstimate, sweepPassedPlayer);
   }
 
   // clear canvas -- not needed since starfield backdrop
@@ -594,6 +678,7 @@ function processInteraction(skip) {
   // if speed control open, apply and close
   const ss = $('#speed-selector');
   if (ss.length) {
+    removeMarker();
     shipSpeed = roundTo1Decimal(parseFloat(ss.text()));
     if (shipSpeed < 0.5) {
       bgMusic.playbackRate = 1;

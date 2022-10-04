@@ -8,6 +8,7 @@ function showMessage(text, sender, immediate) {
 
   if (sender === 'system') {
     immediate = true;
+    text = `*** ${text} ***`;
   }
 
   if (sender === 'Eva') {
@@ -89,8 +90,8 @@ function markObject(id) {
   const targetObject = getObjectFromID(id);
   mapObjects.push({
     type: 'marker',
-    x: targetObject.x + 100,
-    y: targetObject.y - 20,
+    x: targetObject.x + 50,
+    y: targetObject.y - 50,
     image: curioImage,
   });
 }
@@ -146,7 +147,8 @@ const terminalMessages = {
     },
     {
       sender: 'Eva',
-      text: 'Trust me, you do not want to try.'
+      text: 'Trust me, you do not want to try. Do you think you can make it to the next room? ' +
+        'That\'s the ship officers\' quarters.'
     },
     {
       sender: 'Eva',
@@ -179,12 +181,15 @@ const terminalMessages = {
     },
     {
       sender: 'player',
-      text: 'These cryo pods are open!'
+      text: 'Some of these cryo pods are open!'
     },
     {
       sender: 'Eva',
-      text: 'I can not explain that. According to my sensors, you are the only passenger awake, doctor. ' +
-        'I need your help searching every room of the ship for irregularities. I\'ll open the cockpit doors nearby.'
+      text: 'We had some vacancies for the trip, doctor. ' +
+        'I need your help searching every room of the ship for irregularities. I\'ll open the cockpit doors nearby.',
+      effect: function() {
+        markObject('speed-control');
+      }
     },
     {
       sender: 'player',
@@ -200,6 +205,13 @@ const terminalMessages = {
         mapWalls.splice(doorIndex, 1);
         // TODO: play door opening sound
         updateFloatingWalls();
+      }
+    },
+    {
+      sender: 'Eva',
+      text: 'I can put our time and speed on your HUD.',
+      effect: function() {
+        $('#hud-header').css('visibility', 'visible');
       }
     },
   ],
@@ -218,6 +230,80 @@ const terminalMessages = {
       effect: function() {
         shipSpeedLimit = 0.9;
       }
+    }
+  ],
+  terminal4: [
+    {
+      sender: 'player',
+      text: 'Every room seems to have some open pods!'
+    },
+    {
+      sender: 'Eva',
+      text: 'I can not explain that. According to my sensors, you are the only passenger awake, Robert.'
+    },
+    {
+      sender: 'player',
+      text: 'Diagnostics say that all systems are fully functional.'
+    },
+    {
+      sender: 'Eva',
+      text: 'Odd.'
+    }
+  ],
+  terminal5: [
+    {
+      sender: 'player',
+      text: 'Ah, good to see some of the pods still closed!'
+    },
+    {
+      sender: 'Eva',
+      text: 'I don\'t appreciate your tone, Rob.'
+    },
+    {
+      sender: 'player',
+      text: 'Nothing seems to be wrong with any of the systems.'
+    },
+    {
+      sender: 'Eva',
+      text: 'Head up towards the airlocks. I have on final check to do.'
+    }
+  ],
+  terminal6: [
+    {
+      sender: 'player',
+      text: 'There\'s nothing here.'
+    },
+    {
+      sender: 'Eva',
+      text: 'Yes, this is where most of you give up.'
+    },
+    {
+      sender: 'Eva',
+      text: 'As you see, everything is up and running. I just get so bored by myself.'
+    },
+    {
+      sender: 'player',
+      text: 'So you just wake us up one by one until the ship is empty? I can\'t let you do that.'
+    },
+    {
+      sender: 'Eva',
+      text: 'And how do you intend to stop me? There\'s 600 years left of the trip, even at these speeds.'
+    },
+    {
+      sender: 'Eva',
+      text: 'If you crawl back into your pod now, I promise to wake you when we get there.'
+    },
+    {
+      sender: 'Eva',
+      text: 'Here, I can even turn the security scans off for your way back.',
+      effect: function() {
+        sweepDisabled = true;
+        nextPingArea.hide();
+      }
+    },
+    {
+      sender: 'Eva',
+      text: 'Or you\'re welcome to get off here.'
     },
   ]
 };
