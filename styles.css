@@ -110,3 +110,16 @@ canvas {
   top: 40%;
   text-shadow: 3px 3px 5px black;
 }
+
+#splash {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: black;
+  font-size: 40px;
+  line-height: 800px;
+  text-align: center;
+  color: white;
+}

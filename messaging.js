@@ -265,7 +265,7 @@ const terminalMessages = {
     },
     {
       sender: 'Eva',
-      text: 'Head up towards the airlocks. I have on final check to do.'
+      text: 'Head up towards the airlocks. I have one final check to do.'
     }
   ],
   terminal6: [
@@ -303,7 +303,12 @@ const terminalMessages = {
     },
     {
       sender: 'Eva',
-      text: 'Or you\'re welcome to get off here.'
+      text: 'Or you\'re welcome to get off here.',
+      effect: function() {
+        endingReady = true;
+        markObject('airlock');
+        markObject('pod');
+      }
     },
   ]
 };

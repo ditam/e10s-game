@@ -32,6 +32,7 @@ let shipSpeed = 0.5; // fraction of c
 let shipSpeedLimit = 0.7;
 
 let sweepDisabled = false;
+let endingReady = false;
 
 const playerImage = $('<img>').attr('src', 'assets/player.png').get(0);
 let playerAngle = 0; // radians, starting from x axis clockwise
@@ -216,6 +217,19 @@ const mapObjects = [
     y: -20,
     assetURL: 'assets/terminal.png',
   },
+  // game ending trigger objects
+  {
+    id: 'airlock',
+    x: 50,
+    y: 200,
+    assetURL: 'assets/transparent_dot.png',
+  },
+  {
+    id: 'pod',
+    x: 2100,
+    y: 200,
+    assetURL: 'assets/transparent_dot.png',
+  },
 ];
 
 const useGridmarks = false;
@@ -231,13 +245,20 @@ if (DEBUG && useGridmarks) {
   }
 }
 
+const imageAssets = {}; // cache of asset image elements for objects
+
 (function addImageRefToTileTypesAndObjects() {
   tileTypes.forEach(tile => {
     if (tile.transparent) {
       return;
     }
-    const image = $('<img>').attr('src', tile.bgURL);
-    // FIXME: use dictionary for collecting image elements - no need for duplicates
+    let image;
+    if (!imageAssets[tile.bgURL]) {
+      image = $('<img>').attr('src', tile.bgURL);
+      imageAssets[tile.bgURL] = image;
+    } else {
+      image = imageAssets[tile.bgURL];
+    }
     tile.image = image.get(0);
   });
   mapObjects.forEach(o => {
@@ -245,7 +266,13 @@ if (DEBUG && useGridmarks) {
       return;
     }
     console.assert(o.assetURL, 'Malformed map object: ', o);
-    const image = $('<img>').attr('src', o.assetURL);
+    let image;
+    if (!imageAssets[o.assetURL]) {
+      image = $('<img>').attr('src', o.assetURL);
+      imageAssets[o.assetURL] = image;
+    } else {
+      image = imageAssets[o.assetURL];
+    }
     o.image = image.get(0);
   });
 })();
@@ -580,8 +607,6 @@ function drawFrame(timestamp) {
         console.log('Ping OK');
       }
     }
-
-    console.log('hitscan start:', timeCount, lastPing, sweepEstimate, sweepPassedPlayer);
   }
 
   // clear canvas -- not needed since starfield backdrop
@@ -675,6 +700,18 @@ function processInteraction(skip) {
     musicStarted = true;
   }
 
+  // check end game triggers
+  if (endingReady) {
+    const airlock = mapObjects.filter(o=>o.id==='airlock')[0];
+    if (Math.abs(player.x - airlock.x) < NEARBY_RADIUS && Math.abs(player.y - airlock.y) < NEARBY_RADIUS) {
+      $('#splash').text('Goodbye, Doctor Clarke.').fadeIn();
+    }
+    const pod = mapObjects.filter(o=>o.id==='pod')[0];
+    if (Math.abs(player.x - pod.x) < NEARBY_RADIUS && Math.abs(player.y - pod.y) < NEARBY_RADIUS) {
+      $('#splash').text('Goodnight, Robert.').fadeIn();
+    }
+  }
+
   // if speed control open, apply and close
   const ss = $('#speed-selector');
   if (ss.length) {
@@ -745,6 +782,10 @@ $(document).ready(function() {
   }, false);
 
   updateSpeedDisplay();
+
+  setTimeout(function() {
+    $('#splash').fadeOut(3000);
+  }, 4000);
 
   pingSweep = $('#sweep');
   // FIXME: add transition property dynamically (does not seem to work with .css()?)
