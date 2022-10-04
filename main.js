@@ -453,6 +453,7 @@ function endGame() {
     playerInViewport.y = player.y - viewport.y;
 
     shipSpeed = 0.5;
+    bgMusic.playbackRate = 1;
     shipSpeedLimit = 0.7;
 
     mapObjects.filter(o=>o.type === 'terminal').forEach(o=>{
@@ -583,10 +584,22 @@ const keysPressed = {
 };
 
 function processInteraction(skip) {
+  // TODO: use splash screen to trigger user interaction
+  // trigger music if not yet started
+  if (!musicStarted) {
+    bgMusic.play();
+    musicStarted = true;
+  }
+
   // if speed control open, apply and close
   const ss = $('#speed-selector');
   if (ss.length) {
     shipSpeed = roundTo1Decimal(parseFloat(ss.text()));
+    if (shipSpeed < 0.5) {
+      bgMusic.playbackRate = 1;
+    } else {
+      bgMusic.playbackRate = 0.5 / shipSpeed;
+    }
     updateSpeedDisplay();
     msgLogArea.empty();
     ss.remove();
@@ -629,6 +642,8 @@ function roundTo1Decimal(num) {
   return Math.round(num * 10) / 10;
 }
 
+let bgMusic;
+let musicStarted = false;
 $(document).ready(function() {
   debugLog = $('#debug-log');
 
@@ -637,6 +652,11 @@ $(document).ready(function() {
   nextPingArea = $('#next-ping-value');
   speedArea = $('#speed-value');
   dilationArea = $('#time-dilation-value');
+
+  bgMusic = new Audio('assets/bgmusic.mp3');
+  bgMusic.addEventListener('ended', function() {
+    this.currentTime = 0;
+  }, false);
 
   updateSpeedDisplay();
 
