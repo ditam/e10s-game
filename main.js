@@ -656,6 +656,7 @@ $(document).ready(function() {
   bgMusic = new Audio('assets/bgmusic.mp3');
   bgMusic.addEventListener('ended', function() {
     this.currentTime = 0;
+    this.play();
   }, false);
 
   updateSpeedDisplay();
